@@ -1,0 +1,2 @@
+# splitbucks
+A splitwise clone.
