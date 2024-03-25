@@ -493,7 +493,7 @@ func (db *Dynamo) AddMember(groupID, memberID, addedBy string) (*model.Group, er
 	activityID := uuid.New().String()
 	memberAddedActivity, err := dynamodbattribute.MarshalMap(&model.Activity{
 		Base: model.Base{
-			PK:        db.GroupPK(groupID),
+			PK:        groupID,
 			SK:        db.ActivitySK(activityID),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -618,7 +618,19 @@ func (db *Dynamo) RemoveMember(groupID, memberID, removedBy string) (*model.Grou
 	return &group, nil
 }
 
-func (db *Dynamo) CreateExpense(description string, amount float32, currency string, paidBy string, addedBy string, splitType string, split map[string]float32, expenseDate time.Time, note string, splitMembers []string, expenseType string, groupID string) error {
+func (db *Dynamo) CreateExpense(description string,
+	amount float32,
+	currency string,
+	paidBy string,
+	addedBy string,
+	splitType string,
+	split map[string]float32,
+	expenseDate time.Time,
+	note string,
+	splitMembers []string,
+	expenseType string,
+	groupID string,
+) (*model.Expense, error) {
 	expenseID := uuid.New().String()
 	// two cases on basis of expense type either GROUP expense or NONGROUP expense
 	if expenseType == "GROUP" {
@@ -644,8 +656,8 @@ func (db *Dynamo) CreateExpense(description string, amount float32, currency str
 			GroupID:      groupID,
 		})
 		if err != nil {
-			log.Fatalf("Got error marshalling User: %s", err.Error())
-			return err
+			log.Fatalf("Got error marshalling Expense: %s", err.Error())
+			return nil, err
 		}
 		writeReqs = append(
 			writeReqs,
@@ -668,13 +680,14 @@ func (db *Dynamo) CreateExpense(description string, amount float32, currency str
 			},
 		})
 		if err != nil {
-			log.Fatalf("Got error marshalling User: %s", err.Error())
-			return err
+			log.Fatalf("Got error marshalling Activity: %s", err.Error())
+			return nil, err
 		}
 		writeReqs = append(
 			writeReqs,
 			&dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: expenseAddedActivity}},
 		)
+
 		// and also update the Owes mapping in PK: GROUP#<group_id> SK: GROUP#<group_id> entry
 		// 1. First get the group entry
 		res, err := db.Client.Query(&dynamodb.QueryInput{
@@ -694,15 +707,17 @@ func (db *Dynamo) CreateExpense(description string, amount float32, currency str
 			},
 		})
 		if err != nil {
-			return err
+			log.Fatalf("Got error querying for Group entry: %s", err.Error())
+			return nil, err
 		}
 		if res.Items == nil || len(res.Items) == 0 {
-			return nil
+			return nil, nil
 		}
 		group := model.Group{}
 		err = dynamodbattribute.UnmarshalMap(res.Items[0], &group)
 		if err != nil {
-			return err
+			log.Fatalf("Got error unmarshalling Group: %s", err.Error())
+			return nil, err
 		}
 
 		// 2. Now update the Owes mapping with new values
@@ -712,8 +727,8 @@ func (db *Dynamo) CreateExpense(description string, amount float32, currency str
 
 		groupMarshal, err := dynamodbattribute.MarshalMap(group)
 		if err != nil {
-			log.Fatalf("Got error marshalling User: %s", err.Error())
-			return err
+			log.Fatalf("Got error marshalling Group: %s", err.Error())
+			return nil, err
 		}
 		writeReqs = append(
 			writeReqs,
@@ -728,8 +743,8 @@ func (db *Dynamo) CreateExpense(description string, amount float32, currency str
 
 		_, err = db.Client.BatchWriteItem(input)
 		if err != nil {
-			log.Fatalf("Got error calling PutItem: %s", err)
-			return err
+			log.Fatalf("Got error calling BatchWriteItem: %s", err)
+			return nil, err
 		}
 	} else {
 		// First add an entry for PK: USER#<user_id>, SK: EXPENSE#<expense_id> for every member id

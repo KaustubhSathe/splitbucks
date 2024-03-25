@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Expense struct {
 	Base
@@ -15,6 +18,14 @@ type Expense struct {
 	SplitMembers []string
 	ExpenseType  ExpenseType
 	GroupID      string
+}
+
+func (in *Expense) Stringify() string {
+	b, err := json.Marshal(in)
+	if err != nil {
+		return ""
+	}
+	return string(b)
 }
 
 type SplitType int

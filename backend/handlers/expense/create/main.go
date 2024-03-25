@@ -50,11 +50,11 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		dynamo = db.NewDynamo()
 	}
 
-	err = dynamo.CreateExpense(body.Description,
+	expense, err := dynamo.CreateExpense(body.Description,
 		body.Amount,
 		body.Currency,
 		body.PaidBy,
-		userInfo.Email,
+		dynamo.UserPK(userInfo.Email),
 		body.SplitType,
 		body.Split,
 		body.ExpenseDate,
@@ -71,6 +71,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
+		Body:       expense.Stringify(),
 	}, nil
 }
 

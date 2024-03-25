@@ -26,6 +26,8 @@ type Lambdas struct {
 	CreateGroupHandler              awscdklambdagoalpha.GoFunction
 	GetUserGroupsHandler            awscdklambdagoalpha.GoFunction
 	GetMembersHandler               awscdklambdagoalpha.GoFunction
+	AddMemberHandler                awscdklambdagoalpha.GoFunction
+	RemoveMemberHandler             awscdklambdagoalpha.GoFunction
 }
 
 func CreateDynamoTable(stack awscdk.Stack) {
@@ -148,6 +150,28 @@ func CreateLambdas(stack awscdk.Stack) *Lambdas {
 		Architecture: awslambda.Architecture_ARM_64(),
 	})
 
+	addMemberHandler := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("addMemberHandler"), &awscdklambdagoalpha.GoFunctionProps{
+		Runtime: awslambda.Runtime_PROVIDED_AL2(),
+		Entry:   jsii.String("./handlers/groups/add_member"),
+		Bundling: &awscdklambdagoalpha.BundlingOptions{
+			GoBuildFlags: jsii.Strings(`-ldflags "-s -w"`),
+		},
+		Role:         requiredRoles,
+		Environment:  envs,
+		Architecture: awslambda.Architecture_ARM_64(),
+	})
+
+	removeMemberHandler := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("removeMemberHandler"), &awscdklambdagoalpha.GoFunctionProps{
+		Runtime: awslambda.Runtime_PROVIDED_AL2(),
+		Entry:   jsii.String("./handlers/groups/remove_member"),
+		Bundling: &awscdklambdagoalpha.BundlingOptions{
+			GoBuildFlags: jsii.Strings(`-ldflags "-s -w"`),
+		},
+		Role:         requiredRoles,
+		Environment:  envs,
+		Architecture: awslambda.Architecture_ARM_64(),
+	})
+
 	return &Lambdas{
 		LoginHandler:                    loginHandler,
 		UpdateEmailSettingsHandler:      updateEmailSettingsHandler,
@@ -157,6 +181,8 @@ func CreateLambdas(stack awscdk.Stack) *Lambdas {
 		CreateGroupHandler:              createGroupHandler,
 		GetUserGroupsHandler:            getUserGroupsHandler,
 		GetMembersHandler:               getMembersHandler,
+		AddMemberHandler:                addMemberHandler,
+		RemoveMemberHandler:             removeMemberHandler,
 	}
 }
 
@@ -241,7 +267,21 @@ func CreateHTTPApi(stack awscdk.Stack, lambdas *Lambdas) awscdkapigatewayv2alpha
 		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_GET},
 		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.GetMembersHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
 	})
-	
+
+	// add member to group api
+	splitbucksApi.AddRoutes(&awscdkapigatewayv2alpha.AddRoutesOptions{
+		Path:        jsii.String("/api/add_member"),
+		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_POST},
+		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.AddMemberHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
+	})
+
+	// remove member from group api
+	splitbucksApi.AddRoutes(&awscdkapigatewayv2alpha.AddRoutesOptions{
+		Path:        jsii.String("/api/remove_member"),
+		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_POST},
+		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.RemoveMemberHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
+	})
+
 	return splitbucksApi
 }
 
