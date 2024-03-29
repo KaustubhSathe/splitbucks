@@ -8,7 +8,6 @@ export function AddFriendScreen() {
     const [email, setEmail] = useState<string>("");
     const [changesSaved, setChangesSaved] = useState<boolean>(false);
 
-
     const validateEmail = (email: string) => {
         var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         return re.test(email);
@@ -20,18 +19,13 @@ export function AddFriendScreen() {
             return
         }
 
-        const idToken = await AsyncStorage.getItem('idToken')
-        if (idToken !== null) {
-            const res = await AddFriend(idToken, email, name)
-            if (res.status === 200) {
-                setEmail("")
-                setName("")
-                setChangesSaved(true)
-                setTimeout(() => {
-                    setChangesSaved(false)
-                }, 3000)
-            }
-        }
+        await AddFriend(email, name)
+        setEmail("")
+        setName("")
+        setChangesSaved(true)
+        setTimeout(() => {
+            setChangesSaved(false)
+        }, 3000)
     }, [email, name])
 
     return (

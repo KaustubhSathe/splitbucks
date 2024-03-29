@@ -5,7 +5,7 @@ import {
     GoogleSignin, GoogleSigninButton,
 } from '@react-native-google-signin/google-signin';
 import { useEffect } from "react";
-import { CLIENT_ID } from "../../config";
+import { CLIENT_ID } from '@env'
 import { Authenticate } from "../../api/profile";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from "react-redux";
@@ -62,22 +62,19 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                 color={GoogleSigninButton.Color.Light}
                 onPress={async () => {
                     try {
+                        await AsyncStorage.clear()
                         await GoogleSignin.hasPlayServices();
                         const userInfo = await GoogleSignin.signIn();
+                        await AsyncStorage.setItem('idToken', userInfo.idToken as string);
                         console.log(userInfo)
                         // Now save this profile in backend and log into app
-                        const response = await Authenticate(userInfo.idToken as string)
-                        if (response.status === 200) {
-                            const body: User = await response.json()
-                            await AsyncStorage.setItem('idToken', userInfo.idToken as string);
-                            await AsyncStorage.setItem('user', JSON.stringify(body));
-                            dispatch(setUser(body));
-                            navigation.reset({
-                                index: 0,
-                                routes: [{ name: "AppScreen" }],
-                            })
-                            await SplashScreen.hideAsync();
-                        }
+                        const user: User = await Authenticate()
+                        dispatch(setUser(user));
+                        navigation.reset({
+                            index: 0,
+                            routes: [{ name: "AppScreen" }],
+                        })
+                        await SplashScreen.hideAsync();
                     } catch (error) {
                         console.error(JSON.stringify(error))
                     }

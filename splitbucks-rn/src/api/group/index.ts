@@ -1,37 +1,58 @@
 import { API_DOMAIN } from "@env";
+import { Group, User } from "../../types/types";
+import { RetryHelper } from "../helper";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export async function CreateGroup(splitbucks_id_token: string, groupName: string) {
-    const response = await fetch(`${API_DOMAIN}/api/group`, {
+const USER_GROUPS = 'user_groups'
+const GROUP_MEMBERS = (group_id: string) => `group_members_${group_id}`
+
+export async function CreateGroup(groupName: string): Promise<Group> {
+    let group = await RetryHelper<Group>(`${API_DOMAIN}/api/group`, {
         method: "POST",
-        headers: {
-            "splitbucks_id_token": splitbucks_id_token
-        },
         body: JSON.stringify({
             GroupName: groupName
         })
     })
-
-    return response;
+    await AsyncStorage.removeItem(USER_GROUPS)
+    return group
 }
 
-export async function GetUserGroups(splitbucks_id_token: string) {
-    const response = await fetch(`${API_DOMAIN}/api/user_groups`, {
-        method: "GET",
-        headers: {
-            "splitbucks_id_token": splitbucks_id_token
+export async function GetUserGroups(): Promise<Group[]> {
+    let groups: Group[] = JSON.parse(await AsyncStorage.getItem(USER_GROUPS));
+    if (groups === null) {
+        groups = await RetryHelper<Group[]>(`${API_DOMAIN}/api/user_groups`, {
+            method: "GET",
+        })
+        if (groups) {
+            await AsyncStorage.setItem(USER_GROUPS, JSON.stringify(groups))
         }
-    })
-
-    return response;
+    }
+    return groups
 }
 
-export async function GetMembers(splitbucks_id_token: string, group_id: string) {
-    const response = await fetch(`${API_DOMAIN}/api/get_members?group_id=${group_id}`, {
-        method: "GET",
-        headers: {
-            "splitbucks_id_token": splitbucks_id_token
+export async function GetMembers(group_id: string): Promise<User[]> {
+    let users: User[] = JSON.parse(await AsyncStorage.getItem(GROUP_MEMBERS(group_id)));
+    if (users === null) {
+        users = await RetryHelper<User[]>(`${API_DOMAIN}/api/get_members?group_id=${encodeURIComponent(group_id)}`, {
+            method: "GET",
+        })
+        if (users) {
+            await AsyncStorage.setItem(GROUP_MEMBERS(group_id), JSON.stringify(users))
         }
-    })
+    }
+    return users
+}
 
-    return response;
+
+export async function AddMember(group_id: string, member_id: string): Promise<Group> {
+    const group = await RetryHelper<Group>(`${API_DOMAIN}/api/add_member`, {
+        method: "POST",
+        body: JSON.stringify({
+            MemberID: member_id,
+            GroupID: group_id
+        })
+    })
+    await AsyncStorage.removeItem(USER_GROUPS)
+    await AsyncStorage.removeItem(GROUP_MEMBERS(group_id))
+    return group
 }

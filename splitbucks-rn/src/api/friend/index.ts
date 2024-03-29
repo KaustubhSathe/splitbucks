@@ -1,28 +1,32 @@
 import { API_DOMAIN } from "@env";
+import { User } from "../../types/types";
+import { RetryHelper } from "../helper";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export async function GetFriends(splitbucks_id_token: string) {
-    const response = await fetch(`${API_DOMAIN}/api/friend`, {
-        method: "GET",
-        headers: {
-            "splitbucks_id_token": splitbucks_id_token
+const FRIENDS = 'friends'
+
+export async function GetFriends(): Promise<User[]> {
+    let friends: User[] = JSON.parse(await AsyncStorage.getItem(FRIENDS));
+    if (friends === null) {
+        friends = await RetryHelper<User[]>(`${API_DOMAIN}/api/friend`, {
+            method: "GET",
+        })
+        if (friends) {
+            await AsyncStorage.setItem(FRIENDS, JSON.stringify(friends))
         }
-    })
-
-    return response;
+    }
+    return friends
 }
 
 
-export async function AddFriend(splitbucks_id_token: string, email: string, name: string) {
-    const response = await fetch(`${API_DOMAIN}/api/friend`, {
+export async function AddFriend(email: string, name: string) {
+    const friend = await RetryHelper<User>(`${API_DOMAIN}/api/friend`, {
         method: "POST",
-        headers: {
-            "splitbucks_id_token": splitbucks_id_token
-        },
         body: JSON.stringify({
             "EmailID": email,
             "PetName": name
         })
     })
-
-    return response;
+    await AsyncStorage.removeItem(FRIENDS)
+    return friend
 }

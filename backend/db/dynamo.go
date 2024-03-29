@@ -36,6 +36,7 @@ func initializeDynamo() *dynamodb.DynamoDB {
 }
 
 func (db *Dynamo) LoginUser(userInfo *model.UserInfo) (*model.User, error) {
+	writeReqs := []*dynamodb.WriteRequest{}
 	modelUser := model.User{
 		Base: model.Base{
 			PK:        db.UserPK(userInfo.Email),
@@ -85,12 +86,14 @@ func (db *Dynamo) LoginUser(userInfo *model.UserInfo) (*model.User, error) {
 		},
 	})
 	if err != nil {
+		log.Fatalf("Error while db.Client.Query: %s", err.Error())
 		return nil, err
 	}
 	if res.Items != nil && len(res.Items) > 0 {
 		user := model.User{}
 		err = dynamodbattribute.UnmarshalMap(res.Items[0], &user)
 		if err != nil {
+			log.Fatalf("Error while UnmarshalMap: %s", err.Error())
 			return nil, err
 		}
 		return &user, nil
@@ -103,15 +106,20 @@ func (db *Dynamo) LoginUser(userInfo *model.UserInfo) (*model.User, error) {
 		return nil, err
 	}
 
-	input := &dynamodb.PutItemInput{
-		Item:                user,
-		TableName:           aws.String(config.SPLITBUCKS_TABLE),
-		ConditionExpression: aws.String("attribute_not_exists(PK)"),
+	writeReqs = append(
+		writeReqs,
+		&dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: user}},
+	)
+
+	input := &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]*dynamodb.WriteRequest{
+			config.SPLITBUCKS_TABLE: writeReqs,
+		},
 	}
 
-	_, err = db.Client.PutItem(input)
+	_, err = db.Client.BatchWriteItem(input)
 	if err != nil {
-		log.Fatalf("Got error calling PutItem: %s", err)
+		log.Fatalf("Got error calling BatchWriteItem: %s", err.Error())
 		return nil, err
 	}
 
@@ -136,12 +144,14 @@ func (db *Dynamo) GetUser(email string) (*model.User, error) {
 		},
 	})
 	if err != nil {
+		log.Fatalf("Got error calling db.Client.Query: %s", err.Error())
 		return nil, err
 	}
 	if res.Items != nil && len(res.Items) > 0 {
 		user := model.User{}
 		err = dynamodbattribute.UnmarshalMap(res.Items[0], &user)
 		if err != nil {
+			log.Fatalf("Error while unmarshalling User: %s", err.Error())
 			return nil, err
 		}
 		return &user, nil
@@ -191,7 +201,7 @@ func (db *Dynamo) AddFriend(emailID1, emailID2, petName string) error {
 
 	_, err = db.Client.BatchWriteItem(input)
 	if err != nil {
-		log.Fatalf("Got error calling PutItem: %s", err)
+		log.Fatalf("Got error calling BatchWriteItem: %s", err.Error())
 		return err
 	}
 
@@ -216,6 +226,7 @@ func (db *Dynamo) GetFriends(emailID string) ([]*model.User, error) {
 		},
 	})
 	if err != nil {
+		log.Fatalf("Got error calling db.Client.Query: %s", err.Error())
 		return nil, err
 	}
 	if res.Items == nil {
@@ -227,6 +238,7 @@ func (db *Dynamo) GetFriends(emailID string) ([]*model.User, error) {
 		friend := model.Friend{}
 		err = dynamodbattribute.UnmarshalMap(res.Items[i], &friend)
 		if err != nil {
+			log.Fatalf("Got error calling UnmarshalMap: %s", err.Error())
 			return nil, err
 		}
 		friendPK := friend.SK[7:]
@@ -248,6 +260,7 @@ func (db *Dynamo) GetFriends(emailID string) ([]*model.User, error) {
 		},
 	})
 	if err != nil {
+		log.Fatalf("Error while BatchGetItem: %s", err.Error())
 		return nil, err
 	}
 
@@ -301,6 +314,7 @@ func (db *Dynamo) UpdateEmailSettings(email string, notifyOnAddToGroup, notifyOn
 		},
 	})
 	if err != nil {
+		log.Fatalf("Error while UpdateItem: %s", err.Error())
 		return err
 	}
 
@@ -354,6 +368,7 @@ func (db *Dynamo) UpdatePushNotificationSettings(email string, pushNotifyExpense
 		},
 	})
 	if err != nil {
+		log.Fatalf("Error while UpdateItem: %s", err.Error())
 		return err
 	}
 
@@ -373,6 +388,7 @@ func (db *Dynamo) CreateGroup(admin, groupName string) (*model.Group, error) {
 		Admin:     db.UserPK(admin),
 		GroupName: groupName,
 		Members:   []string{db.UserPK(admin)},
+		Owes:      map[string]float32{},
 	})
 	if err != nil {
 		log.Fatalf("Got error marshalling Friend: %s", err.Error())
@@ -380,7 +396,7 @@ func (db *Dynamo) CreateGroup(admin, groupName string) (*model.Group, error) {
 	}
 	entry2, err := dynamodbattribute.MarshalMap(&model.Group{
 		Base: model.Base{
-			PK:        admin,
+			PK:        db.UserPK(admin),
 			SK:        db.GroupPK(groupID),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -462,6 +478,7 @@ func (db *Dynamo) AddMember(groupID, memberID, addedBy string) (*model.Group, er
 		},
 	})
 	if err != nil {
+		log.Fatalf("Error while db.Client.Query: %s", err.Error())
 		return nil, err
 	}
 	if res.Items == nil || len(res.Items) == 0 {
@@ -470,6 +487,7 @@ func (db *Dynamo) AddMember(groupID, memberID, addedBy string) (*model.Group, er
 	group := model.Group{}
 	err = dynamodbattribute.UnmarshalMap(res.Items[0], &group)
 	if err != nil {
+		log.Fatalf("Error while UnmarshalMap: %s", err.Error())
 		return nil, err
 	}
 
@@ -522,7 +540,7 @@ func (db *Dynamo) AddMember(groupID, memberID, addedBy string) (*model.Group, er
 
 	_, err = db.Client.BatchWriteItem(input)
 	if err != nil {
-		log.Fatalf("Got error calling PutItem: %s", err)
+		log.Fatalf("Error while BatchWriteItem: %s", err.Error())
 		return nil, err
 	}
 
@@ -549,6 +567,7 @@ func (db *Dynamo) RemoveMember(groupID, memberID, removedBy string) (*model.Grou
 		},
 	})
 	if err != nil {
+		log.Fatalf("Error while db.Client.Query: %s", err.Error())
 		return nil, err
 	}
 	if res.Items == nil || len(res.Items) == 0 {
@@ -557,6 +576,7 @@ func (db *Dynamo) RemoveMember(groupID, memberID, removedBy string) (*model.Grou
 	group := model.Group{}
 	err = dynamodbattribute.UnmarshalMap(res.Items[0], &group)
 	if err != nil {
+		log.Fatalf("Error while UnmarshalMap: %s", err.Error())
 		return nil, err
 	}
 
@@ -611,7 +631,7 @@ func (db *Dynamo) RemoveMember(groupID, memberID, removedBy string) (*model.Grou
 
 	_, err = db.Client.BatchWriteItem(input)
 	if err != nil {
-		log.Fatalf("Got error calling PutItem: %s", err)
+		log.Fatalf("Error while BatchWriteItem: %s", err.Error())
 		return nil, err
 	}
 
@@ -636,7 +656,7 @@ func (db *Dynamo) CreateExpense(description string,
 	if expenseType == "GROUP" {
 		var writeReqs []*dynamodb.WriteRequest
 		// First add an entry for PK: GROUP#<group_id>, SK: EXPENSE#<expense_id>
-		expense, err := dynamodbattribute.MarshalMap(&model.Expense{
+		expense := &model.Expense{
 			Base: model.Base{
 				PK:        groupID,
 				SK:        db.ExpenseSK(expenseID),
@@ -654,14 +674,15 @@ func (db *Dynamo) CreateExpense(description string,
 			SplitMembers: splitMembers,
 			ExpenseType:  model.ExpenseTypesMap[expenseType],
 			GroupID:      groupID,
-		})
+		}
+		expenseMarshal, err := dynamodbattribute.MarshalMap(expense)
 		if err != nil {
 			log.Fatalf("Got error marshalling Expense: %s", err.Error())
 			return nil, err
 		}
 		writeReqs = append(
 			writeReqs,
-			&dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: expense}},
+			&dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: expenseMarshal}},
 		)
 
 		// Then also add an entry for Activity
@@ -746,50 +767,111 @@ func (db *Dynamo) CreateExpense(description string,
 			log.Fatalf("Got error calling BatchWriteItem: %s", err)
 			return nil, err
 		}
-	} else {
-		// First add an entry for PK: USER#<user_id>, SK: EXPENSE#<expense_id> for every member id
+
+		return expense, nil
+	}
+	// First add an entry for PK: USER#<user_id>, SK: EXPENSE#<expense_id> for every member id and also for paidby member
+	// splitmembers will have the paidBy member present in it
+	var writeReqs []*dynamodb.WriteRequest
+	for i := 0; i < len(splitMembers); i++ {
+		entry, err := dynamodbattribute.MarshalMap(&model.Expense{
+			Base: model.Base{
+				PK:        splitMembers[i],
+				SK:        db.ExpenseNonGroupSK(expenseID),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			Description:  description,
+			Amount:       amount,
+			Currency:     currency,
+			PaidBy:       paidBy,
+			SplitType:    model.SplitTypesMap[splitType],
+			Split:        split,
+			ExpenseDate:  expenseDate,
+			Note:         note,
+			SplitMembers: splitMembers,
+			ExpenseType:  model.ExpenseTypesMap[expenseType],
+			GroupID:      db.GroupSK("NONGROUP"),
+		})
+		if err != nil {
+			log.Fatalf("Got error marshalling Expense: %s", err.Error())
+			return nil, err
+		}
+
+		writeReqs = append(writeReqs, &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: entry}})
+	}
+
+	// 2. Now update the Owes mapping with new values for all users in splitMembers array
+	getKeys := []map[string]*dynamodb.AttributeValue{}
+	for i := 0; i < len(splitMembers); i++ {
+		getKeys = append(getKeys, map[string]*dynamodb.AttributeValue{
+			"PK": {
+				S: aws.String(splitMembers[i]),
+			},
+			"SK": {
+				S: aws.String("GROUP#NONGROUP"),
+			},
+		})
+	}
+
+	gps, err := db.Client.BatchGetItem(&dynamodb.BatchGetItemInput{
+		RequestItems: map[string]*dynamodb.KeysAndAttributes{
+			config.SPLITBUCKS_TABLE: {
+				Keys: getKeys,
+			},
+		},
+	})
+	if err != nil {
+		log.Fatalf("Got error while BatchGetItem: %s", err.Error())
+		return nil, err
+	}
+
+	// First check if all NONGROUP entries are present in DB if not create them
+	if len(gps.Responses[config.SPLITBUCKS_TABLE]) != len(splitMembers) {
 		var writeReqs []*dynamodb.WriteRequest
-		for i := 0; i < len(splitMembers); i++ {
-			entry, err := dynamodbattribute.MarshalMap(&model.Expense{
-				Base: model.Base{
-					PK:        splitMembers[i],
-					SK:        db.ExpenseNonGroupSK(expenseID),
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				},
-				Description:  description,
-				Amount:       amount,
-				Currency:     currency,
-				PaidBy:       paidBy,
-				SplitType:    model.SplitTypesMap[splitType],
-				Split:        split,
-				ExpenseDate:  expenseDate,
-				Note:         note,
-				SplitMembers: splitMembers,
-				ExpenseType:  model.ExpenseTypesMap[expenseType],
-			})
-			if err != nil {
-				log.Fatalf("Got error marshalling Friend: %s", err.Error())
-				return err
+		groupPKs := []string{}
+		for _, item := range gps.Responses[config.SPLITBUCKS_TABLE] {
+			var group model.Group
+			_ = dynamodbattribute.UnmarshalMap(item, &group)
+			groupPKs = append(groupPKs, group.PK)
+		}
+		// Now find which entries are not present
+		for _, splitMember := range splitMembers {
+			if !slices.Contains(groupPKs, splitMember) {
+				nongroup, err := dynamodbattribute.MarshalMap(&model.Group{
+					Base: model.Base{
+						PK:        splitMember,
+						SK:        db.GroupSK("NONGROUP"),
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+					},
+					Admin:     splitMember,
+					GroupName: "NONGROUP",
+					Members:   []string{splitMember},
+					Owes:      map[string]float32{},
+				})
+				if err != nil {
+					log.Fatalf("Got error marshalling Group: %s", err.Error())
+					return nil, err
+				}
+				writeReqs = append(writeReqs, &dynamodb.WriteRequest{
+					PutRequest: &dynamodb.PutRequest{Item: nongroup},
+				})
 			}
-
-			writeReqs = append(writeReqs, &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: entry}})
+		}
+		input := &dynamodb.BatchWriteItemInput{
+			RequestItems: map[string][]*dynamodb.WriteRequest{
+				config.SPLITBUCKS_TABLE: writeReqs,
+			},
+		}
+		_, err = db.Client.BatchWriteItem(input)
+		if err != nil {
+			log.Fatalf("Got error calling BatchWriteItem: %s", err)
+			return nil, err
 		}
 
-		// 2. Now update the Owes mapping with new values for all users
-		getKeys := []map[string]*dynamodb.AttributeValue{}
-		for i := 0; i < len(splitMembers); i++ {
-			getKeys = append(getKeys, map[string]*dynamodb.AttributeValue{
-				"PK": {
-					S: aws.String(splitMembers[i]),
-				},
-				"SK": {
-					S: aws.String("GROUP#NONGROUP"),
-				},
-			})
-		}
-
-		gps, err := db.Client.BatchGetItem(&dynamodb.BatchGetItemInput{
+		// Now refetch the response 
+		gps, err = db.Client.BatchGetItem(&dynamodb.BatchGetItemInput{
 			RequestItems: map[string]*dynamodb.KeysAndAttributes{
 				config.SPLITBUCKS_TABLE: {
 					Keys: getKeys,
@@ -797,50 +879,71 @@ func (db *Dynamo) CreateExpense(description string,
 			},
 		})
 		if err != nil {
-			return err
-		}
-
-		groups := []*model.Group{}
-
-		if len(gps.Responses) > 0 {
-			for key, value := range gps.Responses {
-				fmt.Printf("Items retrieved from table %s:\n", key)
-				for _, item := range value {
-					var group model.Group
-					_ = dynamodbattribute.UnmarshalMap(item, &group)
-					for k, v := range split {
-						group.Owes[k] += v
-					}
-					groups = append(groups, &group)
-				}
-			}
-		}
-
-		// Now batch save all the groups
-		for i := 0; i < len(groups); i++ {
-			entry, err := dynamodbattribute.MarshalMap(groups[i])
-			if err != nil {
-				log.Fatalf("Got error marshalling Friend: %s", err.Error())
-				return err
-			}
-
-			writeReqs = append(writeReqs, &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: entry}})
-		}
-
-		input := &dynamodb.BatchWriteItemInput{
-			RequestItems: map[string][]*dynamodb.WriteRequest{
-				config.SPLITBUCKS_TABLE: writeReqs,
-			},
-		}
-
-		_, err = db.Client.BatchWriteItem(input)
-		if err != nil {
-			log.Fatalf("Got error calling PutItem: %s", err)
-			return err
+			log.Fatalf("Got error while BatchGetItem: %s", err.Error())
+			return nil, err
 		}
 	}
 
-	return nil
+	groups := []*model.Group{}
+
+	if len(gps.Responses) > 0 {
+		for _, value := range gps.Responses {
+			for _, item := range value {
+				var group model.Group
+				_ = dynamodbattribute.UnmarshalMap(item, &group)
+				if group.Owes == nil {
+					group.Owes = make(map[string]float32)
+				}
+				for k, v := range split {
+					group.Owes[k] += v
+				}
+				groups = append(groups, &group)
+			}
+		}
+	}
+
+	// Now batch save all the groups
+	for i := 0; i < len(groups); i++ {
+		entry, err := dynamodbattribute.MarshalMap(groups[i])
+		if err != nil {
+			log.Fatalf("Got error marshalling Group: %s", err.Error())
+			return nil, err
+		}
+
+		writeReqs = append(writeReqs, &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: entry}})
+	}
+
+	input := &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]*dynamodb.WriteRequest{
+			config.SPLITBUCKS_TABLE: writeReqs,
+		},
+	}
+
+	_, err = db.Client.BatchWriteItem(input)
+	if err != nil {
+		log.Fatalf("Got error calling BatchWriteItem: %s", err)
+		return nil, err
+	}
+
+	return &model.Expense{
+		Base: model.Base{
+			PK:        paidBy,
+			SK:        db.ExpenseNonGroupSK(expenseID),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Description:  description,
+		Amount:       amount,
+		Currency:     currency,
+		PaidBy:       paidBy,
+		SplitType:    model.SplitTypesMap[splitType],
+		Split:        split,
+		ExpenseDate:  expenseDate,
+		Note:         note,
+		SplitMembers: splitMembers,
+		ExpenseType:  model.ExpenseTypesMap[expenseType],
+		GroupID:      db.GroupSK("NONGROUP"),
+	}, nil
 }
 
 func (db *Dynamo) GetUserGroups(emailID string) ([]*model.Group, error) {
@@ -861,14 +964,14 @@ func (db *Dynamo) GetUserGroups(emailID string) ([]*model.Group, error) {
 		},
 	})
 	if err != nil {
+		log.Fatalf("Error while db.Client.Query: %s", err.Error())
 		return nil, err
 	}
 	if res.Items == nil {
-		return nil, nil
+		return []*model.Group{}, nil
 	}
 
 	getKeys := []map[string]*dynamodb.AttributeValue{}
-
 	for i := 0; i < len(res.Items); i++ {
 		group := model.Group{}
 		err = dynamodbattribute.UnmarshalMap(res.Items[i], &group)
@@ -886,26 +989,33 @@ func (db *Dynamo) GetUserGroups(emailID string) ([]*model.Group, error) {
 		})
 	}
 
-	gps, err := db.Client.BatchGetItem(&dynamodb.BatchGetItemInput{
-		RequestItems: map[string]*dynamodb.KeysAndAttributes{
-			config.SPLITBUCKS_TABLE: {
-				Keys: getKeys,
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	groups := []*model.Group{}
 
-	if len(gps.Responses) > 0 {
-		for key, value := range gps.Responses {
-			fmt.Printf("Items retrieved from table %s:\n", key)
-			for _, item := range value {
-				var group model.Group
-				_ = dynamodbattribute.UnmarshalMap(item, &group)
-				groups = append(groups, &group)
+	if len(getKeys) > 0 {
+		gps, err := db.Client.BatchGetItem(&dynamodb.BatchGetItemInput{
+			RequestItems: map[string]*dynamodb.KeysAndAttributes{
+				config.SPLITBUCKS_TABLE: {
+					Keys: getKeys,
+				},
+			},
+		})
+		if err != nil {
+			log.Fatalf("Error while BatchGetItem: %s", err.Error())
+			return nil, err
+		}
+
+		if len(gps.Responses) > 0 {
+			for key, value := range gps.Responses {
+				fmt.Printf("Items retrieved from table %s:\n", key)
+				for _, item := range value {
+					var group model.Group
+					err = dynamodbattribute.UnmarshalMap(item, &group)
+					if err != nil {
+						log.Fatalf("Error while unmarshalling Group: %s", err.Error())
+						return nil, err
+					}
+					groups = append(groups, &group)
+				}
 			}
 		}
 	}
@@ -919,10 +1029,10 @@ func (db *Dynamo) GetMembers(groupID string) ([]*model.User, error) {
 		KeyConditionExpression: aws.String("#PK = :pk AND #SK = :sk"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":pk": {
-				S: aws.String(db.GroupPK(groupID)),
+				S: aws.String(groupID),
 			},
 			":sk": {
-				S: aws.String(db.GroupSK(groupID)),
+				S: aws.String(groupID),
 			},
 		},
 		ExpressionAttributeNames: map[string]*string{
@@ -934,7 +1044,7 @@ func (db *Dynamo) GetMembers(groupID string) ([]*model.User, error) {
 		return nil, err
 	}
 	if res.Items == nil || len(res.Items) == 0 {
-		return nil, nil
+		return []*model.User{}, nil
 	}
 
 	group := model.Group{}
@@ -948,10 +1058,10 @@ func (db *Dynamo) GetMembers(groupID string) ([]*model.User, error) {
 	for i := 0; i < len(group.Members); i++ {
 		getKeys = append(getKeys, map[string]*dynamodb.AttributeValue{
 			"PK": {
-				S: aws.String(db.UserPK(group.Members[i])),
+				S: aws.String(group.Members[i]),
 			},
 			"SK": {
-				S: aws.String(db.UserSK(group.Members[i])),
+				S: aws.String(group.Members[i]),
 			},
 		})
 	}

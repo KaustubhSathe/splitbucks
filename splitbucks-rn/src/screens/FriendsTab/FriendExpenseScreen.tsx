@@ -5,7 +5,7 @@ import React from "react";
 
 export function FriendExpenseScreen() {
     const route = useRoute<FriendExpenseScreenProps['route']>();
-
+   
     return (
         <View className="bg-white h-full">
             <View className="w-full h-[10%] flex-row mt-4 pr-4">
@@ -20,8 +20,6 @@ export function FriendExpenseScreen() {
                 />
             </View>
             <Text className="mt-10 ml-7 text-xl font-normal">{route.params?.friend.Name}</Text>
-
-
         </View>
     )
 }

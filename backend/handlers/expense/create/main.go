@@ -5,6 +5,7 @@ import (
 	"backend/utils"
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -40,6 +41,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
+		log.Fatalf("Error while unmarshalling JSON body: %s", err.Error())
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 		}, nil
@@ -50,7 +52,8 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		dynamo = db.NewDynamo()
 	}
 
-	expense, err := dynamo.CreateExpense(body.Description,
+	expense, err := dynamo.CreateExpense(
+		body.Description,
 		body.Amount,
 		body.Currency,
 		body.PaidBy,

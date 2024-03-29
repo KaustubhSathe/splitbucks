@@ -7,6 +7,7 @@ import { RootParamList } from "../../../types/types";
 
 export function PushNotificationSettings() {
     const navigation = useNavigation<NativeStackNavigationProp<RootParamList>>();
+    
     return (
         <TouchableOpacity className="flex-row gap-4 mb-4" onPress={() => {
             navigation.navigate("PushNotificationSettingsScreen")

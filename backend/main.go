@@ -28,6 +28,7 @@ type Lambdas struct {
 	GetMembersHandler               awscdklambdagoalpha.GoFunction
 	AddMemberHandler                awscdklambdagoalpha.GoFunction
 	RemoveMemberHandler             awscdklambdagoalpha.GoFunction
+	AddExpenseHandler               awscdklambdagoalpha.GoFunction
 }
 
 func CreateDynamoTable(stack awscdk.Stack) {
@@ -172,6 +173,17 @@ func CreateLambdas(stack awscdk.Stack) *Lambdas {
 		Architecture: awslambda.Architecture_ARM_64(),
 	})
 
+	addExpenseHandler := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("addExpenseHandler"), &awscdklambdagoalpha.GoFunctionProps{
+		Runtime: awslambda.Runtime_PROVIDED_AL2(),
+		Entry:   jsii.String("./handlers/expense/create"),
+		Bundling: &awscdklambdagoalpha.BundlingOptions{
+			GoBuildFlags: jsii.Strings(`-ldflags "-s -w"`),
+		},
+		Role:         requiredRoles,
+		Environment:  envs,
+		Architecture: awslambda.Architecture_ARM_64(),
+	})
+
 	return &Lambdas{
 		LoginHandler:                    loginHandler,
 		UpdateEmailSettingsHandler:      updateEmailSettingsHandler,
@@ -183,6 +195,7 @@ func CreateLambdas(stack awscdk.Stack) *Lambdas {
 		GetMembersHandler:               getMembersHandler,
 		AddMemberHandler:                addMemberHandler,
 		RemoveMemberHandler:             removeMemberHandler,
+		AddExpenseHandler:               addExpenseHandler,
 	}
 }
 
@@ -280,6 +293,13 @@ func CreateHTTPApi(stack awscdk.Stack, lambdas *Lambdas) awscdkapigatewayv2alpha
 		Path:        jsii.String("/api/remove_member"),
 		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_POST},
 		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.RemoveMemberHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
+	})
+
+	// add expense api
+	splitbucksApi.AddRoutes(&awscdkapigatewayv2alpha.AddRoutesOptions{
+		Path:        jsii.String("/api/add_expense"),
+		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_POST},
+		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.AddExpenseHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
 	})
 
 	return splitbucksApi

@@ -6,14 +6,36 @@ export type RootParamList = {
     GroupDashboardScreen: undefined;
     GroupScreen: undefined;
     CreateGroupScreen: undefined;
+    GroupSettingsScreen: {
+        group: Group | undefined;
+    } | undefined;
     AddExpenseScreen: undefined;
+    WhoPaidScreen: {
+        groupPK: string | undefined;
+        selectedMembers: User[] | undefined;
+        expensePaidBy: User | undefined;
+        setExpensePaidBy: React.Dispatch<React.SetStateAction<User>> | undefined;
+    } | undefined;
+    AdjustSplitScreen: {
+        groupPK: string | undefined;
+        selectedMembers: User[] | undefined;
+        totalAmount: number;
+        expensePaidBy: User;
+        expenseSplit: Map<string, number>;
+        setExpenseSplit: React.Dispatch<React.SetStateAction<Map<string, number>>>;
+        setExpenseSplitType: React.Dispatch<React.SetStateAction<string>>,
+        setExpenseSplitMembers: React.Dispatch<React.SetStateAction<User[]>>
+    } | undefined;
     FriendsScreen: undefined;
+    FriendListScreen: {
+        groupPK: string | undefined;
+    } | undefined;
     AddFriendScreen: undefined;
     FriendExpenseScreen: {
         friend: User;
     } | undefined;
     GroupExpenseScreen: {
-        group: Group;
+        group: Group | undefined;
     } | undefined;
     ActivityScreen: undefined;
     AccountScreen: undefined;
@@ -36,6 +58,9 @@ export type AccountScreenProps = BottomTabScreenProps<RootParamList, 'AccountScr
 export type LoginScreenProps = BottomTabScreenProps<RootParamList, 'LogInScreen'>
 export type FriendExpenseScreenProps = NativeStackScreenProps<RootParamList, "FriendExpenseScreen">;
 export type GroupExpenseScreenProps = NativeStackScreenProps<RootParamList, "GroupExpenseScreen">;
+export type FriendListScreenProps = NativeStackScreenProps<RootParamList, "FriendListScreen">;
+export type WhoPaidScreenProps = NativeStackScreenProps<RootParamList, "WhoPaidScreen">;
+export type AdjustSplitScreenProps = NativeStackScreenProps<RootParamList, "AdjustSplitScreen">;
 
 export type User = {
     PK: string
@@ -73,4 +98,24 @@ export type Group = {
     GroupName: string
     Admin: string
     Members: string[]
+    Owes: Map<string, number>
+}
+
+export type Expense = {
+    PK: string
+    SK: string
+    CreatedAt: Date
+    UpdatedAt: Date
+    DeletedAt: Date
+    Description: string
+    Amount: number
+    Currency: string
+    PaidBy: string
+    SplitType: string
+    Split: Map<string, number>
+    ExpenseDate: Date
+    Note: string
+    SplitMembers: string[]
+    ExpenseType: string
+    GroupID: string
 }

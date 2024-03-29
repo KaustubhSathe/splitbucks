@@ -10,41 +10,14 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin"
 import { GetUserGroups } from "../../api/group"
 import { GroupsList } from "./components/GroupList"
 import { setValue as setGroups } from '../../lib/redux/groupsSlice'
+import { useIsFocused } from "@react-navigation/native"
 
 export function GroupDashboardScreen({ navigation }: GroupDashboardProps) {
     const groups = useSelector((state: RootState) => state.groups.value)
     const dispatch = useDispatch()
 
     useEffect(() => {
-        AsyncStorage.getItem('idToken')
-            .then(async res => {
-                if (res !== null) {
-                    GetUserGroups(res)
-                        .then(async res => {
-                            if (res.status === 200) {
-                                const groups: Group[] = await res.json();
-                                console.log(groups)
-                                dispatch(setGroups(groups))
-                            } else if (res.status === 401) {
-                                const userInfo = await GoogleSignin.signInSilently()
-                                await AsyncStorage.setItem('idToken', userInfo.idToken as string)
-                                AsyncStorage.getItem('idToken')
-                                    .then(async res => {
-                                        if (res !== null) {
-                                            GetUserGroups(res)
-                                                .then(async res => {
-                                                    if (res.status === 200) {
-                                                        const groups: Group[] = await res.json();
-                                                        console.log(groups)
-                                                        dispatch(setGroups(groups))
-                                                    }
-                                                })
-                                        }
-                                    })
-                            }
-                        })
-                }
-            })
+        GetUserGroups().then(groups => dispatch(setGroups(groups)))
     }, []);
 
     return (

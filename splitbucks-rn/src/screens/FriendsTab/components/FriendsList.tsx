@@ -18,7 +18,7 @@ export function FriendsList({ friends }: { friends: User[] }) {
         <ScrollView className="w=full h-full" refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-            {friends.map(fr => <Friend friend={fr} key={fr.PK} />)}
+            {friends && friends.map(fr => <Friend friend={fr} key={fr.PK} />)}
             <AddFriendButton />
         </ScrollView>
     )

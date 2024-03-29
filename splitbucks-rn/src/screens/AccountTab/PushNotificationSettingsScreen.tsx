@@ -23,38 +23,40 @@ export function PushNotificationSettingsScreen() {
 
 
     const updatePushNotificationSettings = useCallback(async () => {
-        const idToken = await AsyncStorage.getItem('idToken')
-        if (idToken !== null) {
-            const res = await UpdatePushNotificationSettings(
-                idToken,
-                pushNotifyExpenseAdded,
-                pushNotifyCommentAdded,
-                pushNotifyExpenseUpdated,
-                pushNotifyAddedAsFriend,
-                pushNotifyFriendUpdated,
-                pushNotifyAddedToGroup,
-                pushNotifyGroupUpdated,
-                pushNotifyRemovedFromGroup,
-            )
-            if (res.status === 200) {
-                dispatch(setUser({
-                    ...user,
-                    PushNotifyExpenseAdded: pushNotifyExpenseAdded,
-                    PushNotifyCommentAdded: pushNotifyCommentAdded,
-                    PushNotifyExpenseUpdated: pushNotifyExpenseUpdated,
-                    PushNotifyAddedAsFriend: pushNotifyAddedAsFriend,
-                    PushNotifyFriendUpdated: pushNotifyFriendUpdated,
-                    PushNotifyAddedToGroup: pushNotifyAddedToGroup,
-                    PushNotifyGroupUpdated: pushNotifyGroupUpdated,
-                    PushNotifyRemovedFromGroup: pushNotifyRemovedFromGroup,
-                }))
-                setChangesSaved(true)
-                setTimeout(() => {
-                    setChangesSaved(false)
-                }, 3000)
-            }
-        }
-    }, [pushNotifyExpenseAdded, pushNotifyCommentAdded, pushNotifyExpenseUpdated, pushNotifyAddedAsFriend, pushNotifyFriendUpdated, pushNotifyAddedToGroup, pushNotifyGroupUpdated, pushNotifyRemovedFromGroup]);
+        const user = await UpdatePushNotificationSettings(
+            pushNotifyExpenseAdded,
+            pushNotifyCommentAdded,
+            pushNotifyExpenseUpdated,
+            pushNotifyAddedAsFriend,
+            pushNotifyFriendUpdated,
+            pushNotifyAddedToGroup,
+            pushNotifyGroupUpdated,
+            pushNotifyRemovedFromGroup,
+        )
+        dispatch(setUser({
+            ...user,
+            PushNotifyExpenseAdded: pushNotifyExpenseAdded,
+            PushNotifyCommentAdded: pushNotifyCommentAdded,
+            PushNotifyExpenseUpdated: pushNotifyExpenseUpdated,
+            PushNotifyAddedAsFriend: pushNotifyAddedAsFriend,
+            PushNotifyFriendUpdated: pushNotifyFriendUpdated,
+            PushNotifyAddedToGroup: pushNotifyAddedToGroup,
+            PushNotifyGroupUpdated: pushNotifyGroupUpdated,
+            PushNotifyRemovedFromGroup: pushNotifyRemovedFromGroup,
+        }))
+        setChangesSaved(true)
+        setTimeout(() => {
+            setChangesSaved(false)
+        }, 3000)
+    }, [pushNotifyExpenseAdded,
+        pushNotifyCommentAdded,
+        pushNotifyExpenseUpdated,
+        pushNotifyAddedAsFriend,
+        pushNotifyFriendUpdated,
+        pushNotifyAddedToGroup,
+        pushNotifyGroupUpdated,
+        pushNotifyRemovedFromGroup
+    ]);
 
     return (
         <View className="p-4">

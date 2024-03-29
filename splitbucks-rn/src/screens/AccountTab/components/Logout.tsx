@@ -12,8 +12,7 @@ export function LogOut() {
     const navigation = useNavigation<NativeStackNavigationProp<RootParamList>>();
     return (
         <Pressable className="flex-row gap-4 mb-4" onPress={async () => {
-            await AsyncStorage.removeItem('user')
-            await AsyncStorage.removeItem('idToken')
+            await AsyncStorage.clear()
             await GoogleSignin.signOut();
             navigation.reset({
                 index: 0,

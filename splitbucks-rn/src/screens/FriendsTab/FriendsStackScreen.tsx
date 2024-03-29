@@ -16,7 +16,7 @@ export function FriendsStackScreen() {
             <FriendsStack.Screen name="FriendsScreen" component={FriendsScreen} />
             <FriendsStack.Screen name="AddFriendScreen" component={AddFriendScreen} options={{
                 headerShown: true,
-                headerTitle: "Add Friend"
+                headerTitle: "Add Friend",
             }} />
             <FriendsStack.Screen name="FriendExpenseScreen" component={FriendExpenseScreen} options={{
                 headerShown: false,

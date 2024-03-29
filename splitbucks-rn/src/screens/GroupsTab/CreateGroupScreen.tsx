@@ -23,17 +23,11 @@ export function CreateGroupScreen() {
             return
         }
 
-        const idToken = await AsyncStorage.getItem('idToken')
-        if (idToken !== null) {
-            const res = await CreateGroup(idToken, groupName)
-            if (res.status === 200) {
-                const group: Group = await res.json()
-                dispatch(setGroups([...groups, group]))
-                navigation.navigate("GroupExpenseScreen", {
-                    group: group,
-                })
-            }
-        }
+        const group = await CreateGroup(groupName)
+        dispatch(setGroups([...groups, group]))
+        navigation.navigate("GroupExpenseScreen", {
+            group: group,
+        })
     }, [groupName, navigation])
 
     return (
@@ -42,7 +36,6 @@ export function CreateGroupScreen() {
                 <TouchableOpacity className="mt-auto mb-auto" onPress={() => navigation.goBack()}>
                     <AntDesign name="close" size={30} color="black" />
                 </TouchableOpacity>
-                <Text className="mt-auto mb-auto text-lg">Create a group</Text>
                 <TouchableOpacity activeOpacity={0.7} className="mt-auto mb-auto" onPress={createGroup}>
                     <Text className="font-bold text-base text-[#5BC5A7]">Done</Text>
                 </TouchableOpacity>

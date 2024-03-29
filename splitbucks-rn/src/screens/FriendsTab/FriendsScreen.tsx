@@ -1,46 +1,25 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect } from "react"
 import { View, Pressable, TouchableHighlight, TouchableOpacity, Text } from "react-native"
-import { FriendsScreenProps, User } from "../../types/types"
+import { FriendsScreenProps } from "../../types/types"
 import { AntDesign } from '@expo/vector-icons';
 import { WelcomeScreen } from "./components/WelcomeScreen"
 import { FriendsList } from "./components/FriendsList"
 import { GetFriends } from "../../api/friend";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
-
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../../lib/redux/store";
+import { setValue as setFriends } from '../../lib/redux/friendsSlice'
+import { useIsFocused } from "@react-navigation/native";
 
 export function FriendsScreen({ navigation }: FriendsScreenProps) {
-    const [friends, setFriends] = useState<User[]>([]);
+    const friends = useSelector((state: RootState) => state.friends.value)
+    const dispatch = useDispatch()
+    const isFocused = useIsFocused()
 
     useEffect(() => {
-        AsyncStorage.getItem('idToken')
-            .then(async res => {
-                if (res !== null) {
-                    GetFriends(res)
-                        .then(async res => {
-                            if (res.status === 200) {
-                                const friends: User[] = await res.json();
-                                setFriends(friends)
-                            } else if (res.status === 401) {
-                                const { idToken } = await GoogleSignin.getTokens()
-                                await AsyncStorage.setItem('idToken', idToken)
-                                AsyncStorage.getItem('idToken')
-                                    .then(async res => {
-                                        if (res !== null) {
-                                            GetFriends(res)
-                                                .then(async res => {
-                                                    if (res.status === 200) {
-                                                        const friends: User[] = await res.json();
-                                                        setFriends(friends)
-                                                    }
-                                                })
-                                        }
-                                    })
-                            }
-                        })
-                }
-            })
-    }, []);
+        if (isFocused) {
+            GetFriends().then(friends => dispatch(setFriends(friends)))
+        }
+    }, [isFocused]);
 
     return (
         <View className="bg-white h-full relative">
@@ -53,7 +32,7 @@ export function FriendsScreen({ navigation }: FriendsScreenProps) {
                 </TouchableHighlight>
             </View>
             <View className="bg-slate-300 h-[2px] w-full mb-[2%]" />
-            {friends.length === 0 ? <WelcomeScreen /> : <FriendsList friends={friends} />}
+            {!friends || friends.length === 0 ? <WelcomeScreen /> : <FriendsList friends={friends} />}
             <TouchableOpacity onPress={() => {
                 navigation.navigate("AddExpenseScreen")
             }} className="absolute bottom-5 right-5 h-12 w-36 bg-[#5BC5A7] flex-row justify-center rounded-full shadow-lg shadow-black">

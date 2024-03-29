@@ -19,27 +19,28 @@ export function EmailSettingsScreen() {
     const [notifyWhenSomeonePays, setNotifyWhenSomeonePays] = useState<boolean>(user.NotifyWhenSomeonePays);
     const [changesSaved, setChangesSaved] = useState<boolean>(false);
 
-
     const updateEmailSettings = useCallback(async () => {
-        const idToken = await AsyncStorage.getItem('idToken')
-        if (idToken !== null) {
-            const res = await UpdateEmailSettings(idToken, notifyOnAddToGroup, notifyOnAddAsFriend, notifyOnExpenseAdded, notifyOnExpenseEdited, notifyOnComment, notifyWhenSomeonePays)
-            if (res.status === 200) {
-                dispatch(setUser({
-                    ...user,
-                    NotifyOnAddAsFriend: notifyOnAddAsFriend,
-                    NotifyOnAddToGroup: notifyOnAddToGroup,
-                    NotifyOnComment: notifyOnComment,
-                    NotifyOnExpenseAdded: notifyOnExpenseAdded,
-                    NotifyOnExpenseEdited: notifyOnExpenseEdited,
-                    NotifyWhenSomeonePays: notifyWhenSomeonePays
-                }))
-                setChangesSaved(true)
-                setTimeout(() => {
-                    setChangesSaved(false)
-                }, 3000)
-            }
-        }
+        const user = await UpdateEmailSettings(
+            notifyOnAddToGroup,
+            notifyOnAddAsFriend,
+            notifyOnExpenseAdded,
+            notifyOnExpenseEdited,
+            notifyOnComment,
+            notifyWhenSomeonePays
+        )
+        dispatch(setUser({
+            ...user,
+            NotifyOnAddAsFriend: notifyOnAddAsFriend,
+            NotifyOnAddToGroup: notifyOnAddToGroup,
+            NotifyOnComment: notifyOnComment,
+            NotifyOnExpenseAdded: notifyOnExpenseAdded,
+            NotifyOnExpenseEdited: notifyOnExpenseEdited,
+            NotifyWhenSomeonePays: notifyWhenSomeonePays
+        }))
+        setChangesSaved(true)
+        setTimeout(() => {
+            setChangesSaved(false)
+        }, 3000)
     }, [notifyOnAddToGroup, notifyOnAddAsFriend, notifyOnExpenseAdded, notifyOnExpenseEdited, notifyOnComment, notifyWhenSomeonePays]);
 
     return (
