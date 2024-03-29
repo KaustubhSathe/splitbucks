@@ -28,6 +28,14 @@ func (in *Expense) Stringify() string {
 	return string(b)
 }
 
+func StringifyExpenses(in []*Expense) string {
+	b, err := json.Marshal(in)
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
 type SplitType int
 
 const (

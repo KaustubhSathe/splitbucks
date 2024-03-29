@@ -946,6 +946,45 @@ func (db *Dynamo) CreateExpense(description string,
 	}, nil
 }
 
+func (db *Dynamo) GetGroupExpenses(groupID string) ([]*model.Expense, error) {
+	res, err := db.Client.Query(&dynamodb.QueryInput{
+		TableName:              aws.String(config.SPLITBUCKS_TABLE),
+		KeyConditionExpression: aws.String("#PK = :pk AND begins_with(#SK, :sk)"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk": {
+				S: aws.String(db.GroupPK(groupID)),
+			},
+			":sk": {
+				S: aws.String(db.ExpenseSK("")),
+			},
+		},
+		ExpressionAttributeNames: map[string]*string{
+			"#PK": aws.String("PK"),
+			"#SK": aws.String("SK"),
+		},
+	})
+	if err != nil {
+		log.Fatalf("Error while db.Client.Query: %s", err.Error())
+		return nil, err
+	}
+	if res.Items == nil {
+		return []*model.Expense{}, nil
+	}
+
+	expenses := []*model.Expense{}
+
+	for i := 0; i < len(res.Items); i++ {
+		expense := model.Expense{}
+		err = dynamodbattribute.UnmarshalMap(res.Items[i], &expense)
+		if err != nil {
+			return nil, err
+		}
+		expenses = append(expenses, &expense)
+	}
+
+	return expenses, nil
+}
+
 func (db *Dynamo) GetUserGroups(emailID string) ([]*model.Group, error) {
 	res, err := db.Client.Query(&dynamodb.QueryInput{
 		TableName:              aws.String(config.SPLITBUCKS_TABLE),
