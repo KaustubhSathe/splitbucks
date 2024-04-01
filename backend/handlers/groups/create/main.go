@@ -39,7 +39,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		dynamo = db.NewDynamo()
 	}
 
-	group, err := dynamo.CreateGroup(userInfo.Email, body.GroupName)
+	group, err := dynamo.CreateGroup(userInfo.Email, userInfo.Name, body.GroupName)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,

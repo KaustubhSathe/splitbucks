@@ -1,77 +1,36 @@
 package model
 
+import "encoding/json"
+
 type Activity struct {
 	Base
-	CreateGroupActivity
-	EditGroupNameActivity
-	DeleteGroupActivity
-	MemberAddedActivity
-	MemberRemovedActivity
-	MemberLeftActivity
-	ExpenseAddedActivity
-	ExpenseEditedActivity
-	ExpenseDeletedActivity
-	ActivityType ActivityType
-}
-
-type CreateGroupActivity struct {
-	CreatedBy string // user id of admin
-	GroupID   string // created group ID
-}
-
-type EditGroupNameActivity struct {
-	EditedBy    string // user id of editor
-	GroupID     string // edited group id
-	CurrentName string // current name of the group
-	NewName     string // new name of the group
-}
-
-type DeleteGroupActivity struct {
-	DeletedBy string // user id
-	GroupID   string // deleted group id
-}
-
-type MemberAddedActivity struct {
-	AddedBy     string // user id of adder
-	AddedMember string // added member id
-	GroupID     string // group id in which member is added
-}
-
-type MemberRemovedActivity struct {
-	RemovedBy     string // user id of remover
-	RemovedMember string // removed member id
-	GroupID       string // group id in which member is removed
-}
-
-type MemberLeftActivity struct {
-	LeftMember string // member id of member who left
-	GroupID    string // group id which member left
-}
-
-type ExpenseAddedActivity struct {
-	AddedBy   string // member id of who added expense
-	GroupID   string // group id expense is added
-	ExpenseID string // expense id of the expense
-}
-
-type ExpenseEditedActivity struct {
-	EditedBy      string  // member id of who edited expense
-	GroupID       string  // group id expense is edited
-	ExpenseID     string  // expense id of the expense
-	CurrentTitle  string  // current title of the expense
-	NewTitle      string  // new title of the expense
-	CurrentAmount float32 // current amount of the expense
-	NewAmount     float32 // new amount of the expense
-}
-
-type ExpenseDeletedActivity struct {
-	DeletedBy     string  // member id of who edited expense
-	GroupID       string  // group id expense is edited
-	ExpenseID     string  // expense id of the expense
-	CurrentTitle  string  // current title of the expense
-	NewTitle      string  // new title of the expense
-	CurrentAmount float32 // current amount of the expense
-	NewAmount     float32 // new amount of the expense
+	CreatedByID        string // user id of admin
+	CreatedByName      string // user name of admin
+	GroupID            string // created group ID
+	GroupName          string // created group name
+	EditedByID         string // user name of editor
+	EditedByName       string // user id of editor
+	CurrentName        string // current name of the group
+	NewName            string // new name of the group
+	DeletedByID        string // user id
+	DeletedByName      string // user id name
+	AddedByID          string // user id of adder
+	AddedByName        string // user name of adder
+	AddedMemberID      string // added member id
+	AddedMemberName    string // added member name
+	RemovedByID        string // user id of remover
+	RemovedByName      string // user name of remover
+	RemovedMemberID    string // removed member id
+	RemovedMemberName  string // removed member name
+	LeftMemberID       string // member id of member who left
+	LeftMemberName     string
+	ExpenseID          string // expense id of the expense
+	ExpenseDescription string
+	CurrentTitle       string  // current title of the expense
+	NewTitle           string  // new title of the expense
+	CurrentAmount      float32 // current amount of the expense
+	NewAmount          float32 // new amount of the expense
+	ActivityType       ActivityType
 }
 
 type ActivityType int
@@ -100,16 +59,18 @@ var ActivityTypesMap = map[string]ActivityType{
 	"EXPENSE_DELETED": EXPENSE_DELETED,
 }
 
-// Log activity when user:
+func (in *Activity) Stringify() string {
+	b, err := json.Marshal(in)
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
 
-// Creates a group
-// Edits group name
-// Deletes a group
-
-// Adds member to group
-// Removes member from group
-// Member leaves a group
-
-// Adds an expense
-// Edits an expense
-// Deletes an expense
+func StringifyActivities(in []*Activity) string {
+	b, err := json.Marshal(in)
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}

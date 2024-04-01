@@ -3,7 +3,7 @@ import CheckBox from "@react-native-community/checkbox";
 import { useState, useEffect } from "react";
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { GetMembers } from "../../../api/group";
-import { RootParamList, User } from "../../../types/types";
+import { RootParamList, Split, User } from "../../../types/types";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -20,9 +20,9 @@ export function UnequallyTab({
     groupPK: string,
     selectedMembers: User[],
     totalAmount: number,
-    setSplit: React.Dispatch<React.SetStateAction<Map<string, number>>>,
+    setSplit: React.Dispatch<React.SetStateAction<Split>>,
     paidBy: User,
-    split: Map<string, number>,
+    split: Split,
     setSplitType: React.Dispatch<React.SetStateAction<string>>,
     setSplitMembers: React.Dispatch<React.SetStateAction<User[]>>
 }) {
@@ -79,13 +79,13 @@ export function UnequallyTab({
                     <Text className="mt-auto mb-auto">{amountLeft} {amountLeft > 0 ? 'left' : 'over'}</Text>
                 </View>
                 <TouchableOpacity onPress={() => {
-                    const ss = new Map<string, number>(split);
+                    const ss: Split = {};
                     membersContribution.forEach((contribution, i) => {
                         if (members[i].PK !== paidBy.PK) {
-                            if (!ss.get(`${members[i].PK}:${paidBy.SK}`)) {
-                                ss.set(`${members[i].PK}:${paidBy.SK}`, 0.0)
+                            if (!ss[`${members[i].PK}:${paidBy.SK}`]) {
+                                ss[`${members[i].PK}:${paidBy.SK}`] = 0.0
                             }
-                            ss.set(`${members[i].PK}:${paidBy.SK}`, ss.get(`${members[i].PK}:${paidBy.SK}`) + contribution);
+                            ss[`${members[i].PK}:${paidBy.SK}`] += contribution;
                         }
                     })
                     setSplit(ss)
@@ -96,6 +96,6 @@ export function UnequallyTab({
                     <Text className="text-white font-semibold text-base ml-auto mr-auto">Done</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </View >
     )
 }

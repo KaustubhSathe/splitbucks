@@ -10,7 +10,8 @@ type Expense struct {
 	Description  string
 	Amount       float32
 	Currency     string
-	PaidBy       string
+	PaidById     string
+	PaidByName   string
 	SplitType    SplitType
 	Split        map[string]float32
 	ExpenseDate  time.Time

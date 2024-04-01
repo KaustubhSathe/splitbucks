@@ -2,9 +2,11 @@ package main
 
 import (
 	"backend/db"
+	"backend/db/model"
 	"backend/utils"
 	"context"
 	"encoding/json"
+	"log"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -14,7 +16,7 @@ var dynamo *db.Dynamo
 
 // This will be a POST request
 func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	// First authenticate the request only after that add member
+	// First authenticate the request only after that create Expense
 	splitbucks_id_token := request.Headers["splitbucks_id_token"]
 	userInfo, authenticated, err := utils.Authenticate(splitbucks_id_token)
 	if err != nil || !authenticated {
@@ -25,24 +27,22 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	// Now parse body
 	body := struct {
-		MemberID   string `json:"MemberID"`
-		MemberName string `json:"MemberName"`
-		GroupID    string `json:"GroupID"`
-		GroupName  string `json:"GroupName"`
+		GroupIDs []string `json:"GroupIDs"`
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
+		log.Fatalf("Error while unmarshalling JSON body: %s", err.Error())
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 		}, nil
 	}
 
-	// Now save the group in database
+	// Now save the expense in database
 	if dynamo == nil {
 		dynamo = db.NewDynamo()
 	}
 
-	group, err := dynamo.RemoveMember(body.GroupID, body.GroupName, body.MemberID, body.MemberName, dynamo.UserPK(userInfo.Email), userInfo.Name)
+	activities, err := dynamo.GetActivities(body.GroupIDs, dynamo.UserPK(userInfo.Email))
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
@@ -51,7 +51,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Body:       group.Stringify(),
+		Body:       model.StringifyActivities(activities),
 	}, nil
 }
 

@@ -23,7 +23,6 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
             webClientId: CLIENT_ID,
             offlineAccess: false,
         });
-
         AsyncStorage.getItem('idToken').then(async res => {
             if (res !== null) {
                 AsyncStorage.getItem('user')

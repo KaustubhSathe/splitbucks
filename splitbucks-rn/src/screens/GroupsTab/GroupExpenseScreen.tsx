@@ -1,12 +1,14 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { Pressable, Text, TouchableOpacity, View } from "react-native";
-import { GroupExpenseScreenProps, RootParamList, User } from "../../types/types";
+import { Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Expense, GroupExpenseScreenProps, RootParamList, User } from "../../types/types";
 import React, { useEffect, useState } from "react";
 import { GetMembers } from "../../api/group";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Authenticate } from "../../api/profile";
+import { GetGroupExpenses } from "../../api/expense";
+import { ExpenseTile } from "./components/ExpenseTile";
 
 export function GroupExpenseScreen() {
     const route = useRoute<GroupExpenseScreenProps['route']>();
@@ -21,6 +23,8 @@ export function GroupExpenseScreen() {
         amount: number
     }[]>([]);
 
+    const [expenses, setExpenses] = useState<Expense[]>([]);
+
     useEffect(() => {
         Authenticate().then(user => {
             setUser(user)
@@ -34,8 +38,8 @@ export function GroupExpenseScreen() {
                 }[] = [];
                 members?.forEach(mm => {
                     if (mm.PK !== user.PK) {
-                        const mmOwesUser = owes?.get(`${mm.PK}:${user.PK}`) ? owes?.get(`${mm.PK}:${user.PK}`) : 0
-                        const userOwesMm = owes?.get(`${user.PK}:${mm.PK}`) ? owes?.get(`${user.PK}:${mm.PK}`) : 0
+                        const mmOwesUser = owes?.[`${mm.PK}:${user.PK}`] ? owes?.[`${mm.PK}:${user.PK}`] : 0
+                        const userOwesMm = owes?.[`${user.PK}:${mm.PK}`] ? owes?.[`${user.PK}:${mm.PK}`] : 0
                         if (userOwesMm - mmOwesUser > 0) {
                             statements.push({
                                 amount: userOwesMm - mmOwesUser,
@@ -53,6 +57,10 @@ export function GroupExpenseScreen() {
                 })
                 setSettleStatements(statements)
             })
+        })
+
+        GetGroupExpenses(groupID).then(expenses => {
+            setExpenses(expenses.sort((a, b) => new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime()))
         })
     }, [])
 
@@ -78,6 +86,20 @@ export function GroupExpenseScreen() {
                         : <Text>{x.owed} owes you {x.amount}</Text>
                     )
             }
+            <View className="flex-row justify-evenly mt-2">
+                <TouchableOpacity className="w-28 h-10 bg-orange-500 flex justify-center rounded-xl">
+                    <Text className="text-base font-semibold text-white ml-auto mr-auto">Settle Up</Text>
+                </TouchableOpacity>
+                <TouchableOpacity className="w-28 h-10 bg-slate-300 flex justify-center rounded-xl ">
+                    <Text className="text-base font-semibold text-black ml-auto mr-auto">Balances</Text>
+                </TouchableOpacity>
+                <TouchableOpacity className="w-28 h-10 bg-slate-300 flex justify-center rounded-xl ">
+                    <Text className="text-base font-semibold text-black ml-auto mr-auto">Totals</Text>
+                </TouchableOpacity>
+            </View>
+            <ScrollView className="border-t-[1px] mt-2 pl-4 pr-4 ">
+                {expenses.map(x => <ExpenseTile key={x.SK} expense={x} user={user} />)}
+            </ScrollView>
         </View>
     )
 }

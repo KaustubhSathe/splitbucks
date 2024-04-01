@@ -375,7 +375,7 @@ func (db *Dynamo) UpdatePushNotificationSettings(email string, pushNotifyExpense
 	return nil
 }
 
-func (db *Dynamo) CreateGroup(admin, groupName string) (*model.Group, error) {
+func (db *Dynamo) CreateGroup(admin, adminName, groupName string) (*model.Group, error) {
 	groupID := uuid.New().String()
 	var writeReqs []*dynamodb.WriteRequest
 	entry1, err := dynamodbattribute.MarshalMap(&model.Group{
@@ -417,10 +417,11 @@ func (db *Dynamo) CreateGroup(admin, groupName string) (*model.Group, error) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		CreateGroupActivity: model.CreateGroupActivity{
-			CreatedBy: admin,
-			GroupID:   db.GroupPK(groupID),
-		},
+		CreatedByID:   admin,
+		CreatedByName: adminName,
+		GroupID:       db.GroupPK(groupID),
+		GroupName:     groupName,
+		ActivityType:  model.GROUP_CREATED,
 	})
 	if err != nil {
 		log.Fatalf("Got error marshalling Friend: %s", err.Error())
@@ -458,7 +459,7 @@ func (db *Dynamo) CreateGroup(admin, groupName string) (*model.Group, error) {
 	}, nil
 }
 
-func (db *Dynamo) AddMember(groupID, memberID, addedBy string) (*model.Group, error) {
+func (db *Dynamo) AddMember(groupID, groupName, memberID, memberName, addedById, addedByName string) (*model.Group, error) {
 	var writeReqs []*dynamodb.WriteRequest
 	// First fetch the group entry PK: GROUP#<group_id>, SK: GROUP#<group_id>
 	res, err := db.Client.Query(&dynamodb.QueryInput{
@@ -516,11 +517,13 @@ func (db *Dynamo) AddMember(groupID, memberID, addedBy string) (*model.Group, er
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		MemberAddedActivity: model.MemberAddedActivity{
-			AddedBy:     addedBy,
-			AddedMember: memberID,
-			GroupID:     groupID,
-		},
+		AddedByID:       addedById,
+		AddedByName:     addedByName,
+		AddedMemberID:   memberID,
+		AddedMemberName: memberName,
+		GroupName:       groupName,
+		GroupID:         groupID,
+		ActivityType:    model.MEMBER_ADDED,
 	})
 	if err != nil {
 		log.Fatalf("Got error marshalling Friend: %s", err.Error())
@@ -547,7 +550,7 @@ func (db *Dynamo) AddMember(groupID, memberID, addedBy string) (*model.Group, er
 	return &group, nil
 }
 
-func (db *Dynamo) RemoveMember(groupID, memberID, removedBy string) (*model.Group, error) {
+func (db *Dynamo) RemoveMember(groupID, groupName, memberID, memberName, removedById, removedByName string) (*model.Group, error) {
 	var writeReqs []*dynamodb.WriteRequest
 	// First fetch the group entry PK: GROUP#<group_id>, SK: GROUP#<group_id>
 	res, err := db.Client.Query(&dynamodb.QueryInput{
@@ -607,11 +610,13 @@ func (db *Dynamo) RemoveMember(groupID, memberID, removedBy string) (*model.Grou
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		MemberRemovedActivity: model.MemberRemovedActivity{
-			RemovedBy:     removedBy,
-			RemovedMember: memberID,
-			GroupID:       groupID,
-		},
+		RemovedByID:       removedById,
+		RemovedByName:     removedByName,
+		RemovedMemberID:   memberID,
+		RemovedMemberName: memberName,
+		GroupID:           groupID,
+		GroupName:         groupName,
+		ActivityType:      model.MEMBER_REMOVED,
 	})
 	if err != nil {
 		log.Fatalf("Got error marshalling Friend: %s", err.Error())
@@ -638,18 +643,22 @@ func (db *Dynamo) RemoveMember(groupID, memberID, removedBy string) (*model.Grou
 	return &group, nil
 }
 
-func (db *Dynamo) CreateExpense(description string,
+func (db *Dynamo) CreateExpense(
+	description string,
 	amount float32,
 	currency string,
-	paidBy string,
-	addedBy string,
+	paidById string,
+	paidByName string,
+	addedById string,
+	addedByName string,
 	splitType string,
 	split map[string]float32,
 	expenseDate time.Time,
 	note string,
-	splitMembers []string,
+	splitMembers []string, // splitmembers will contain paidById
 	expenseType string,
 	groupID string,
+	groupName string,
 ) (*model.Expense, error) {
 	expenseID := uuid.New().String()
 	// two cases on basis of expense type either GROUP expense or NONGROUP expense
@@ -666,7 +675,8 @@ func (db *Dynamo) CreateExpense(description string,
 			Description:  description,
 			Amount:       amount,
 			Currency:     currency,
-			PaidBy:       paidBy,
+			PaidById:     paidById,
+			PaidByName:   paidByName,
 			SplitType:    model.SplitTypesMap[splitType],
 			Split:        split,
 			ExpenseDate:  expenseDate,
@@ -694,11 +704,13 @@ func (db *Dynamo) CreateExpense(description string,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			ExpenseAddedActivity: model.ExpenseAddedActivity{
-				AddedBy:   addedBy,
-				GroupID:   groupID,
-				ExpenseID: db.ExpensePK(expenseID),
-			},
+			AddedByID:          addedById,
+			AddedByName:        addedByName,
+			GroupName:          groupName,
+			GroupID:            groupID,
+			ExpenseID:          db.ExpensePK(expenseID),
+			ExpenseDescription: description,
+			ActivityType:       model.EXPENSE_ADDED,
 		})
 		if err != nil {
 			log.Fatalf("Got error marshalling Activity: %s", err.Error())
@@ -742,6 +754,9 @@ func (db *Dynamo) CreateExpense(description string,
 		}
 
 		// 2. Now update the Owes mapping with new values
+		if group.Owes == nil {
+			group.Owes = make(map[string]float32)
+		}
 		for k, v := range split {
 			group.Owes[k] += v
 		}
@@ -784,7 +799,8 @@ func (db *Dynamo) CreateExpense(description string,
 			Description:  description,
 			Amount:       amount,
 			Currency:     currency,
-			PaidBy:       paidBy,
+			PaidById:     paidById,
+			PaidByName:   paidByName,
 			SplitType:    model.SplitTypesMap[splitType],
 			Split:        split,
 			ExpenseDate:  expenseDate,
@@ -870,7 +886,7 @@ func (db *Dynamo) CreateExpense(description string,
 			return nil, err
 		}
 
-		// Now refetch the response 
+		// Now refetch the response
 		gps, err = db.Client.BatchGetItem(&dynamodb.BatchGetItemInput{
 			RequestItems: map[string]*dynamodb.KeysAndAttributes{
 				config.SPLITBUCKS_TABLE: {
@@ -913,6 +929,34 @@ func (db *Dynamo) CreateExpense(description string,
 		writeReqs = append(writeReqs, &dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: entry}})
 	}
 
+	// Then also add an entry for Activity associated with every user
+	activityID := uuid.New().String()
+	for _, member := range splitMembers {
+		expenseAddedActivity, err := dynamodbattribute.MarshalMap(&model.Activity{
+			Base: model.Base{
+				PK:        member,
+				SK:        db.ActivityPK(activityID),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+			AddedByID:          addedById,
+			AddedByName:        addedByName,
+			GroupID:            groupID,
+			ExpenseDescription: description,
+			GroupName:          groupName,
+			ExpenseID:          db.ExpensePK(expenseID),
+			ActivityType:       model.EXPENSE_ADDED,
+		})
+		if err != nil {
+			log.Fatalf("Got error marshalling Activity: %s", err.Error())
+			return nil, err
+		}
+		writeReqs = append(
+			writeReqs,
+			&dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: expenseAddedActivity}},
+		)
+	}
+
 	input := &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]*dynamodb.WriteRequest{
 			config.SPLITBUCKS_TABLE: writeReqs,
@@ -927,7 +971,7 @@ func (db *Dynamo) CreateExpense(description string,
 
 	return &model.Expense{
 		Base: model.Base{
-			PK:        paidBy,
+			PK:        paidById,
 			SK:        db.ExpenseNonGroupSK(expenseID),
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -935,7 +979,8 @@ func (db *Dynamo) CreateExpense(description string,
 		Description:  description,
 		Amount:       amount,
 		Currency:     currency,
-		PaidBy:       paidBy,
+		PaidById:     paidById,
+		PaidByName:   paidByName,
 		SplitType:    model.SplitTypesMap[splitType],
 		Split:        split,
 		ExpenseDate:  expenseDate,
@@ -946,13 +991,46 @@ func (db *Dynamo) CreateExpense(description string,
 	}, nil
 }
 
+func (db *Dynamo) GetActivities(groupIDs []string, userID string) ([]*model.Activity, error) {
+	statement := `SELECT * FROM "splitbucks_db" WHERE "PK" IN `
+	groupClause := "["
+	for k, v := range groupIDs {
+		if k == len(groupIDs)-1 {
+			groupClause += fmt.Sprintf("'%s'", v)
+		} else {
+			groupClause += fmt.Sprintf("'%s',", v)
+		}
+	}
+	groupClause += "]"
+	statement += groupClause + ` AND begins_with("SK", 'ACTIVITY#')`
+
+	res, err := db.Client.ExecuteStatement(&dynamodb.ExecuteStatementInput{
+		Statement: aws.String(statement),
+	})
+	if err != nil {
+		log.Fatalf("Error while ExecuteStatement: %s", err.Error())
+		return nil, err
+	}
+	activites := []*model.Activity{}
+
+	for i := 0; i < len(res.Items); i++ {
+		activity := model.Activity{}
+		err = dynamodbattribute.UnmarshalMap(res.Items[i], &activity)
+		if err != nil {
+			return nil, err
+		}
+		activites = append(activites, &activity)
+	}
+	return activites, nil
+}
+
 func (db *Dynamo) GetGroupExpenses(groupID string) ([]*model.Expense, error) {
 	res, err := db.Client.Query(&dynamodb.QueryInput{
 		TableName:              aws.String(config.SPLITBUCKS_TABLE),
 		KeyConditionExpression: aws.String("#PK = :pk AND begins_with(#SK, :sk)"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":pk": {
-				S: aws.String(db.GroupPK(groupID)),
+				S: aws.String(groupID),
 			},
 			":sk": {
 				S: aws.String(db.ExpenseSK("")),

@@ -29,7 +29,7 @@ export function GroupSettingsScreen() {
         <View className="pt-2">
             <Text className="ml-4 mb-2 text-base font-semibold text-slate-500">Group members</Text>
             <AddMember group={group} />
-            {members.map(x => <MemberTile key={x.PK} member={x} onPress={() => { }} secondText={x.Email} />)}
+            {members?.map(x => <MemberTile key={x.PK} member={x} onPress={() => { }} secondText={x.Email} />)}
             <Text className="ml-4 mt-4 text-base font-semibold text-slate-500">Advanced Settings</Text>
         </View>
     </View>

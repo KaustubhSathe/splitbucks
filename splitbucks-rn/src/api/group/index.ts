@@ -44,12 +44,14 @@ export async function GetMembers(group_id: string): Promise<User[]> {
 }
 
 
-export async function AddMember(group_id: string, member_id: string): Promise<Group> {
+export async function AddMember(group_id: string, group_name: string, member_id: string, member_name: string): Promise<Group> {
     const group = await RetryHelper<Group>(`${API_DOMAIN}/api/add_member`, {
         method: "POST",
         body: JSON.stringify({
             MemberID: member_id,
-            GroupID: group_id
+            MemberName: member_name,
+            GroupID: group_id,
+            GroupName: group_name,
         })
     })
     await AsyncStorage.removeItem(USER_GROUPS)

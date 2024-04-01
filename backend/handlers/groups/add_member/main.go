@@ -25,8 +25,10 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	// Now parse body
 	body := struct {
-		MemberID string `json:"MemberID"`
-		GroupID  string `json:"GroupID"`
+		MemberID   string `json:"MemberID"`
+		MemberName string `json:"MemberName"`
+		GroupID    string `json:"GroupID"`
+		GroupName  string `json:"GroupName"`
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
@@ -40,7 +42,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		dynamo = db.NewDynamo()
 	}
 
-	group, err := dynamo.AddMember(body.GroupID, body.MemberID, dynamo.UserPK(userInfo.Email))
+	group, err := dynamo.AddMember(body.GroupID, body.GroupName, body.MemberID, body.MemberName, dynamo.UserPK(userInfo.Email), userInfo.Name)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,

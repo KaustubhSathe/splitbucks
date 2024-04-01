@@ -30,7 +30,8 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		Description  string             `json:"Description"`
 		Amount       float32            `json:"Amount"`
 		Currency     string             `json:"Currency"`
-		PaidBy       string             `json:"PaidBy"`    // userid of paid by user
+		PaidById     string             `json:"PaidById"` // userid of paid by user
+		PaidByName   string             `json:"PaidByName"`
 		SplitType    string             `json:"SplitType"` // Split type: EQUALLY, UNEQUALLY, PERCENTAGES
 		Split        map[string]float32 `json:"Split"`     // split is map of user-id to amount
 		ExpenseDate  time.Time          `json:"ExpenseDate"`
@@ -38,6 +39,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		SplitMembers []string           `json:"SplitMembers"`
 		ExpenseType  string             `json:"ExpenseType"` // expense type - GROUP/NONGROUP
 		GroupID      string             `json:"GroupID"`
+		GroupName    string             `json:"GroupName"`
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
@@ -56,8 +58,10 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		body.Description,
 		body.Amount,
 		body.Currency,
-		body.PaidBy,
+		body.PaidById,
+		body.PaidByName,
 		dynamo.UserPK(userInfo.Email),
+		userInfo.Name,
 		body.SplitType,
 		body.Split,
 		body.ExpenseDate,
@@ -65,6 +69,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		body.SplitMembers,
 		body.ExpenseType,
 		body.GroupID,
+		body.GroupName,
 	)
 	if err != nil {
 		return events.APIGatewayProxyResponse{

@@ -11,7 +11,7 @@ import { GetFriends } from "../../api/friend";
 import CheckBox from "@react-native-community/checkbox";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootParamList, User } from "../../types/types";
+import { RootParamList, Split, User } from "../../types/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AddExpense } from "../../api/expense";
 
@@ -26,15 +26,16 @@ export function AddExpenseScreen() {
     const userGroups = useSelector((root: RootState) => root.groups.value)
     const friends = useSelector((root: RootState) => root.friends.value)
     const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>();
+    const [selectedGroupName, setSelectedGroupName] = useState<string>("");
     const [friendsChecked, setFriendsChecked] = useState<boolean[]>(Array<boolean>(friends.length).fill(false));
     const radioButtons: RadioButtonProps[] = userGroups.map(x => ({ id: x.PK, label: x.GroupName, value: x.GroupName }))
     const [loggedInUser, setLoggedInUser] = useState<User>();
     const [expensePaidBy, setExpensePaidBy] = useState<User>(loggedInUser);
-    const [expenseSplit, setExpenseSplit] = useState<Map<string, number>>(new Map<string, number>());
+    const [expenseSplit, setExpenseSplit] = useState<Split>({});
     const [expenseSplitType, setExpenseSplitType] = useState<string>("EQUALLY");
     const [expenseSplitMembers, setExpenseSplitMembers] = useState<User[]>();
     const [validation, setValidation] = useState<string>("");
-    const expenseType = "GROUP"
+    const expenseType = selectedGroupId ? "GROUP" : "NONGROUP"
 
     const saveExpense = useCallback(async () => {
         if (expenseDescription.length === 0) {
@@ -52,11 +53,18 @@ export function AddExpenseScreen() {
             setTimeout(() => setValidation(""), 2000)
             return
         }
+        if (!Object.keys(expenseSplit).length) {
+            setValidation("Split cannot be empty! Please select atleast one member to split.")
+            setTimeout(() => setValidation(""), 2000)
+            return
+        }
+
         AddExpense(
             expenseDescription,
             parseFloat(expenseAmount),
             "Rs",
             expensePaidBy.PK,
+            expensePaidBy.Name,
             expenseSplitType,
             expenseSplit,
             expenseDate,
@@ -64,7 +72,10 @@ export function AddExpenseScreen() {
             expenseSplitMembers.map(x => x.PK),
             expenseType,
             selectedGroupId,
-        ).then(res => console.log("response here s ads a ", res))
+            selectedGroupName
+        ).then(res => {
+            navigation.navigate("GroupsTab")
+        })
     }, [
         expenseDescription,
         expenseAmount,
@@ -76,6 +87,7 @@ export function AddExpenseScreen() {
         expenseSplitMembers,
         expenseType,
         selectedGroupId,
+        selectedGroupName,
         friendsChecked
     ])
 
@@ -99,6 +111,7 @@ export function AddExpenseScreen() {
                         onPress={(selectedGroupId) => {
                             setFriendsChecked(friendsChecked.map(x => false))
                             setSelectedGroupId(selectedGroupId)
+                            setSelectedGroupName(radioButtons.filter(x => x.id)[0].value)
                         }}
                         selectedId={selectedGroupId}
                         layout="row"

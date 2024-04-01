@@ -18,7 +18,7 @@ export function FriendListScreen() {
     const friends = useSelector((state: RootState) => state.friends.value)
     const groups = useSelector((state: RootState) => state.groups.value)
     const group = groups && groups.filter(x => x.PK === groupPK)[0]
-    console.log(group)
+
     const dispatch = useDispatch()
 
     useEffect(() => {
@@ -31,7 +31,7 @@ export function FriendListScreen() {
         <Text className="text-base font-semibold text-slate-500 mt-4 ml-4">Friends on splitbucks</Text>
         {friends.map(x => <MemberTile key={x.PK} member={x} onPress={async () => {
             if (!group?.Members?.includes(x.PK)) {
-                const res = await AddMember(group.PK as string, x.PK);
+                const res = await AddMember(group.PK as string, group.GroupName, x.PK, x.Name);
                 dispatch(setGroups([...groups.filter(grp => grp.PK !== res.PK), res]))
             }
         }} secondText={group?.Members?.includes(x.PK) ? "Already in group" : ""} />)}

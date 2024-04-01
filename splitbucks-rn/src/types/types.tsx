@@ -21,8 +21,8 @@ export type RootParamList = {
         selectedMembers: User[] | undefined;
         totalAmount: number;
         expensePaidBy: User;
-        expenseSplit: Map<string, number>;
-        setExpenseSplit: React.Dispatch<React.SetStateAction<Map<string, number>>>;
+        expenseSplit: Split;
+        setExpenseSplit: React.Dispatch<React.SetStateAction<Split>>;
         setExpenseSplitType: React.Dispatch<React.SetStateAction<string>>,
         setExpenseSplitMembers: React.Dispatch<React.SetStateAction<User[]>>
     } | undefined;
@@ -98,7 +98,11 @@ export type Group = {
     GroupName: string
     Admin: string
     Members: string[]
-    Owes: Map<string, number>
+    Owes: Split // Map string to number
+}
+
+export type Split = {
+    [key: string]: number
 }
 
 export type Expense = {
@@ -110,12 +114,61 @@ export type Expense = {
     Description: string
     Amount: number
     Currency: string
-    PaidBy: string
+    PaidById: string
+    PaidByName: string
     SplitType: string
-    Split: Map<string, number>
+    Split: Split // Map string to number
     ExpenseDate: Date
     Note: string
     SplitMembers: string[]
     ExpenseType: string
     GroupID: string
 }
+
+export type Activity = {
+    PK: string
+    SK: string
+    CreatedAt: Date
+    UpdatedAt: Date
+    DeletedAt: Date
+    ActivityType: ActivityType
+    CreatedByID: string
+    CreatedByName: string
+    GroupID: string
+    GroupName: string
+    EditedByID: string
+    EditedByName: string
+    CurrentName: string
+    NewName: string
+    DeletedByID: string
+    DeletedByName: string
+    AddedByID: string
+    AddedByName: string
+    AddedMemberID: string
+    AddedMemberName: string
+    RemovedByID: string
+    RemovedByName: string
+    RemovedMemberID: string
+    RemovedMemberName: string
+    LeftMemberID: string
+    LeftMemberName: string
+    ExpenseID: string
+    ExpenseDescription: string
+    CurrentTitle: string
+    NewTitle: string
+    CurrentAmount: number
+    NewAmount: number
+}
+
+export enum ActivityType {
+    GROUP_CREATED,
+    GROUP_EDITED,
+    GROUP_DELETED,
+    MEMBER_ADDED,
+    MEMBER_REMOVED,
+    MEMBER_LEFT,
+    EXPENSE_ADDED,
+    EXPENSE_EDITED,
+    EXPENSE_DELETED,
+}
+

@@ -1,22 +1,36 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Text, View } from "react-native";
-import { RootParamList, ActivityScreenProps } from "../../types/types";
+import { ScrollView } from "react-native";
+import { RootParamList, Activity } from "../../types/types";
+import { useEffect, useState } from "react";
+import { GetUserGroups } from "../../api/group";
+import { GetActivities } from "../../api/activity";
+import { ActivityTile } from "./components/ActivityTile";
 
 const ActivityStack = createNativeStackNavigator<RootParamList>()
 
-function ActivityScreen({ navigation }: ActivityScreenProps) {
+function ActivityScreen() {
+    const [activities, setActivities] = useState<Activity[]>([]);
+
+    useEffect(() => {
+        GetUserGroups().then(groups => {
+            GetActivities(groups.map(x => x.PK))
+                .then(activities => setActivities(activities.sort((a,b) => new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime())))
+        })
+    }, [])
+
     return (
-        <View>
-            <Text>ActivityScreen</Text>
-        </View>
+        <ScrollView>
+            {activities?.map(x => <ActivityTile key={x.SK} activity={x} />)}
+        </ScrollView>
     )
 }
 
 export function ActivityStackScreen() {
     return (
         <ActivityStack.Navigator screenOptions={{
-            headerShown: false,
-            statusBarColor: 'red'
+            headerShown: true,
+            statusBarColor: 'red',
+            title: "Activity",
         }}>
             <ActivityStack.Screen name="ActivityScreen" component={ActivityScreen} />
         </ActivityStack.Navigator>
