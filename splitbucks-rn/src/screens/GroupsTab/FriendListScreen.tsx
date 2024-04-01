@@ -29,7 +29,7 @@ export function FriendListScreen() {
 
     return <View>
         <Text className="text-base font-semibold text-slate-500 mt-4 ml-4">Friends on splitbucks</Text>
-        {friends.map(x => <MemberTile key={x.PK} member={x} onPress={async () => {
+        {friends?.map(x => <MemberTile key={x.PK} member={x} onPress={async () => {
             if (!group?.Members?.includes(x.PK)) {
                 const res = await AddMember(group.PK as string, group.GroupName, x.PK, x.Name);
                 dispatch(setGroups([...groups.filter(grp => grp.PK !== res.PK), res]))

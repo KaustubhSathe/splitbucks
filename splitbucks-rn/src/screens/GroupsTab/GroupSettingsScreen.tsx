@@ -8,7 +8,7 @@ import { MemberTile } from "./components/MemberTile";
 
 
 export function GroupSettingsScreen() {
-    const [members, setMembers] = useState<User[]>([] as User[]);
+    const [members, setMembers] = useState<User[]>([]);
     const route = useRoute<GroupExpenseScreenProps['route']>();
     const group = route.params?.group;
     const [groupName, setGroupName] = useState<string>(group?.GroupName as string);

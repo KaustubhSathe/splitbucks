@@ -1,4 +1,4 @@
-import { Button, Pressable, Text, View } from "react-native";
+import { Button, Pressable, Text, TouchableOpacity, View } from "react-native";
 import CheckBox from '@react-native-community/checkbox';
 import { useCallback, useState } from "react";
 import { UpdateEmailSettings, UpdatePushNotificationSettings } from "../../api/profile";
@@ -23,7 +23,7 @@ export function PushNotificationSettingsScreen() {
 
 
     const updatePushNotificationSettings = useCallback(async () => {
-        const user = await UpdatePushNotificationSettings(
+        await UpdatePushNotificationSettings(
             pushNotifyExpenseAdded,
             pushNotifyCommentAdded,
             pushNotifyExpenseUpdated,
@@ -104,9 +104,9 @@ export function PushNotificationSettingsScreen() {
                     onValueChange={(newValue) => setPushNotifyRemovedFromGroup(newValue)} />
             </View>
 
-            <Pressable className="mt-4 bg-orange-500 w-28 h-10 flex justify-center rounded-lg shadow-lg shadow-orange-700" onPress={updatePushNotificationSettings}>
+            <TouchableOpacity className="mt-4 bg-orange-500 w-28 h-10 flex justify-center rounded-lg shadow-lg shadow-orange-700" onPress={updatePushNotificationSettings}>
                 <Text className="text-base font-semibold text-white ml-auto mr-auto">Save changes</Text>
-            </Pressable>
+            </TouchableOpacity>
             {changesSaved && <Text className="mt-6 text-green-600 font-semibold text-lg">Changes saved successfully!!</Text>}
         </View>
     )

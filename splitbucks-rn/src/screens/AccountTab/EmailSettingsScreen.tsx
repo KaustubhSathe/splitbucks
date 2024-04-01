@@ -1,4 +1,4 @@
-import { Button, Pressable, Text, View } from "react-native";
+import { Button, Pressable, Text, TouchableOpacity, View } from "react-native";
 import CheckBox from '@react-native-community/checkbox';
 import { useCallback, useState } from "react";
 import { UpdateEmailSettings } from "../../api/profile";
@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../lib/redux/store";
 import { setValue as setUser } from '../../lib/redux/userSlice'
+import { User } from "../../types/types";
 
 
 export function EmailSettingsScreen() {
@@ -20,7 +21,7 @@ export function EmailSettingsScreen() {
     const [changesSaved, setChangesSaved] = useState<boolean>(false);
 
     const updateEmailSettings = useCallback(async () => {
-        const user = await UpdateEmailSettings(
+        await UpdateEmailSettings(
             notifyOnAddToGroup,
             notifyOnAddAsFriend,
             notifyOnExpenseAdded,
@@ -41,7 +42,7 @@ export function EmailSettingsScreen() {
         setTimeout(() => {
             setChangesSaved(false)
         }, 3000)
-    }, [notifyOnAddToGroup, notifyOnAddAsFriend, notifyOnExpenseAdded, notifyOnExpenseEdited, notifyOnComment, notifyWhenSomeonePays]);
+    }, [notifyOnAddToGroup, notifyOnAddAsFriend, notifyOnExpenseAdded, notifyOnExpenseEdited, notifyOnComment, notifyWhenSomeonePays, user]);
 
     return (
         <View className="p-4">
@@ -78,9 +79,9 @@ export function EmailSettingsScreen() {
                     onValueChange={(newValue) => setNotifyWhenSomeonePays(newValue)} />
             </View>
 
-            <Pressable className="mt-4 bg-orange-500 w-28 h-10 flex justify-center rounded-lg shadow-lg shadow-orange-700" onPress={updateEmailSettings}>
+            <TouchableOpacity className="mt-4 bg-orange-500 w-28 h-10 flex justify-center rounded-lg shadow-lg shadow-orange-700" onPress={updateEmailSettings}>
                 <Text className="text-base font-semibold text-white ml-auto mr-auto">Save changes</Text>
-            </Pressable>
+            </TouchableOpacity>
             {changesSaved && <Text className="mt-6 text-green-600 font-semibold text-lg">Changes saved successfully!!</Text>}
         </View>
     )

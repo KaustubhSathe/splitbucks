@@ -47,6 +47,7 @@ export type RootParamList = {
     EmailSettingsScreen: undefined;
     PushNotificationSettingsScreen: undefined;
     AppScreen: undefined;
+    ExpenseScreen: undefined;
 }
 
 export type GroupDashboardProps = BottomTabScreenProps<RootParamList, 'GroupDashboardScreen'>

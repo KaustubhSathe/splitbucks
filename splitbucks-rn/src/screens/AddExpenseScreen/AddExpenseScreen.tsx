@@ -27,8 +27,8 @@ export function AddExpenseScreen() {
     const friends = useSelector((root: RootState) => root.friends.value)
     const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>();
     const [selectedGroupName, setSelectedGroupName] = useState<string>("");
-    const [friendsChecked, setFriendsChecked] = useState<boolean[]>(Array<boolean>(friends.length).fill(false));
-    const radioButtons: RadioButtonProps[] = userGroups.map(x => ({ id: x.PK, label: x.GroupName, value: x.GroupName }))
+    const [friendsChecked, setFriendsChecked] = useState<boolean[]>(Array<boolean>(friends?.length).fill(false));
+    const radioButtons: RadioButtonProps[] = userGroups?.map(x => ({ id: x.PK, label: x.GroupName, value: x.GroupName }))
     const [loggedInUser, setLoggedInUser] = useState<User>();
     const [expensePaidBy, setExpensePaidBy] = useState<User>(loggedInUser);
     const [expenseSplit, setExpenseSplit] = useState<Split>({});
@@ -69,7 +69,7 @@ export function AddExpenseScreen() {
             expenseSplit,
             expenseDate,
             expenseNote,
-            expenseSplitMembers.map(x => x.PK),
+            expenseSplitMembers?.map(x => x.PK),
             expenseType,
             selectedGroupId,
             selectedGroupName
@@ -109,7 +109,7 @@ export function AddExpenseScreen() {
                     <RadioGroup
                         radioButtons={radioButtons}
                         onPress={(selectedGroupId) => {
-                            setFriendsChecked(friendsChecked.map(x => false))
+                            setFriendsChecked(friendsChecked?.map(x => false))
                             setSelectedGroupId(selectedGroupId)
                             setSelectedGroupName(radioButtons.filter(x => x.id)[0].value)
                         }}
@@ -117,12 +117,12 @@ export function AddExpenseScreen() {
                         layout="row"
                     />
                     <Text className="text-lg font-semibold text-slate-500 ml-2">Friends</Text>
-                    {friends.map((fr, i) => (
+                    {friends?.map((fr, i) => (
                         <View key={fr.PK} className="flex-row justify-start">
                             <CheckBox className="mt-auto mb-auto" disabled={false} value={friendsChecked.at(i)}
                                 onValueChange={(newValue) => {
                                     setSelectedGroupId(undefined)
-                                    setFriendsChecked(friendsChecked.map((k, v) => v === i ? newValue : k))
+                                    setFriendsChecked(friendsChecked?.map((k, v) => v === i ? newValue : k))
                                 }} />
                             <Text className="mt-auto mb-auto">{fr.Name}</Text>
                         </View>
@@ -139,7 +139,7 @@ export function AddExpenseScreen() {
                     <Text className="text-base font-semibold mt-auto mb-auto">Paid by:</Text>
                     <TouchableOpacity onPress={() => navigation.navigate("WhoPaidScreen", {
                         groupPK: selectedGroupId,
-                        selectedMembers: friendsChecked.map((k, v) => k ? friends[v] : null).filter(x => x),
+                        selectedMembers: friendsChecked?.map((k, v) => k ? friends[v] : null).filter(x => x),
                         expensePaidBy: expensePaidBy,
                         setExpensePaidBy: setExpensePaidBy,
                     })} className="ml-3 mt-auto mb-auto p-2 h-10 border-[1px] border-black flex-row rounded-lg">
@@ -148,7 +148,7 @@ export function AddExpenseScreen() {
                     <Text className="text-base font-semibold mt-auto mb-auto ml-3">and split</Text>
                     <TouchableOpacity onPress={() => navigation.navigate("AdjustSplitScreen", {
                         groupPK: selectedGroupId,
-                        selectedMembers: friendsChecked.map((k, v) => k ? friends[v] : null).filter(x => x),
+                        selectedMembers: friendsChecked?.map((k, v) => k ? friends[v] : null).filter(x => x),
                         totalAmount: parseFloat(expenseAmount),
                         setExpenseSplit: setExpenseSplit,
                         expensePaidBy: expensePaidBy,

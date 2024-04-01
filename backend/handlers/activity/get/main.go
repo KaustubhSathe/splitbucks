@@ -36,6 +36,12 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 			StatusCode: 500,
 		}, nil
 	}
+	if len(body.GroupIDs) == 0 {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 200,
+			Body:       "[]",
+		}, nil
+	}
 
 	// Now save the expense in database
 	if dynamo == nil {
