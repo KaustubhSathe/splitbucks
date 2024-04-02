@@ -31,6 +31,8 @@ type Lambdas struct {
 	AddExpenseHandler               awscdklambdagoalpha.GoFunction
 	GetGroupExpensesHandler         awscdklambdagoalpha.GoFunction
 	GetActivitiesHandler            awscdklambdagoalpha.GoFunction
+	CreateCommentHandler            awscdklambdagoalpha.GoFunction
+	GetCommentsHandler              awscdklambdagoalpha.GoFunction
 }
 
 func CreateDynamoTable(stack awscdk.Stack) {
@@ -208,6 +210,28 @@ func CreateLambdas(stack awscdk.Stack) *Lambdas {
 		Architecture: awslambda.Architecture_ARM_64(),
 	})
 
+	createCommentHandler := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("createCommentHandler"), &awscdklambdagoalpha.GoFunctionProps{
+		Runtime: awslambda.Runtime_PROVIDED_AL2(),
+		Entry:   jsii.String("./handlers/expense/comment"),
+		Bundling: &awscdklambdagoalpha.BundlingOptions{
+			GoBuildFlags: jsii.Strings(`-ldflags "-s -w"`),
+		},
+		Role:         requiredRoles,
+		Environment:  envs,
+		Architecture: awslambda.Architecture_ARM_64(),
+	})
+
+	getCommentsHandler := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("getCommentsHandler"), &awscdklambdagoalpha.GoFunctionProps{
+		Runtime: awslambda.Runtime_PROVIDED_AL2(),
+		Entry:   jsii.String("./handlers/expense/get_comments"),
+		Bundling: &awscdklambdagoalpha.BundlingOptions{
+			GoBuildFlags: jsii.Strings(`-ldflags "-s -w"`),
+		},
+		Role:         requiredRoles,
+		Environment:  envs,
+		Architecture: awslambda.Architecture_ARM_64(),
+	})
+
 	return &Lambdas{
 		LoginHandler:                    loginHandler,
 		UpdateEmailSettingsHandler:      updateEmailSettingsHandler,
@@ -222,6 +246,8 @@ func CreateLambdas(stack awscdk.Stack) *Lambdas {
 		AddExpenseHandler:               addExpenseHandler,
 		GetGroupExpensesHandler:         getGroupExpensesHandler,
 		GetActivitiesHandler:            getActivitiesHandler,
+		CreateCommentHandler:            createCommentHandler,
+		GetCommentsHandler:              getCommentsHandler,
 	}
 }
 
@@ -340,6 +366,20 @@ func CreateHTTPApi(stack awscdk.Stack, lambdas *Lambdas) awscdkapigatewayv2alpha
 		Path:        jsii.String("/api/activities"),
 		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_POST},
 		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.GetActivitiesHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
+	})
+
+	// create comment on expense API
+	splitbucksApi.AddRoutes(&awscdkapigatewayv2alpha.AddRoutesOptions{
+		Path:        jsii.String("/api/comment"),
+		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_POST},
+		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.CreateCommentHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
+	})
+
+	// get comments on expense API
+	splitbucksApi.AddRoutes(&awscdkapigatewayv2alpha.AddRoutesOptions{
+		Path:        jsii.String("/api/comment"),
+		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_GET},
+		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.GetCommentsHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
 	})
 
 	return splitbucksApi

@@ -1026,6 +1026,44 @@ func (db *Dynamo) CreateComment(comment, expenseID, addedByID, addedByName strin
 	return cc, nil
 }
 
+func (db *Dynamo) GetComments(expenseID string) ([]*model.Comment, error) {
+	res, err := db.Client.Query(&dynamodb.QueryInput{
+		TableName:              aws.String(config.SPLITBUCKS_TABLE),
+		KeyConditionExpression: aws.String("#PK = :pk AND begins_with(#SK, :sk)"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk": {
+				S: aws.String(expenseID),
+			},
+			":sk": {
+				S: aws.String(db.CommentSK("")),
+			},
+		},
+		ExpressionAttributeNames: map[string]*string{
+			"#PK": aws.String("PK"),
+			"#SK": aws.String("SK"),
+		},
+	})
+	if err != nil {
+		log.Fatalf("Got error calling db.Client.Query: %s", err.Error())
+		return nil, err
+	}
+	if res.Items == nil {
+		return []*model.Comment{}, nil
+	}
+	comments := []*model.Comment{}
+	for i := 0; i < len(res.Items); i++ {
+		comment := model.Comment{}
+		err = dynamodbattribute.UnmarshalMap(res.Items[i], &comment)
+		if err != nil {
+			log.Fatalf("Got error calling UnmarshalMap: %s", err.Error())
+			return nil, err
+		}
+		comments = append(comments, &comment)
+	}
+
+	return comments, nil
+}
+
 func (db *Dynamo) GetActivities(groupIDs []string, userID string) ([]*model.Activity, error) {
 	statement := `SELECT * FROM "splitbucks_db" WHERE "PK" IN `
 	groupClause := "["

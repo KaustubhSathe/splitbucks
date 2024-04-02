@@ -26,7 +26,8 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	// Now parse body
 	body := struct {
-		GroupName string `json:"GroupName"`
+		Comment   string `json:"Comment"`
+		ExpenseID string `json:"ExpenseID"`
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
@@ -41,9 +42,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		dynamo = db.NewDynamo()
 	}
 
-	comment, err := dynamo.CreateExpense(
-		body.GroupName,
-	)
+	comment, err := dynamo.CreateComment(body.Comment, body.ExpenseID, dynamo.UserPK(userInfo.Email), userInfo.Name)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
@@ -52,7 +51,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Body:       expense.Stringify(),
+		Body:       comment.Stringify(),
 	}, nil
 }
 
