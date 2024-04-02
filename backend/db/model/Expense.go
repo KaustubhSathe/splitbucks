@@ -10,6 +10,8 @@ type Expense struct {
 	Description  string
 	Amount       float32
 	Currency     string
+	AddedByID    string
+	AddedByName  string
 	PaidById     string
 	PaidByName   string
 	SplitType    SplitType

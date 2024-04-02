@@ -675,6 +675,8 @@ func (db *Dynamo) CreateExpense(
 			Description:  description,
 			Amount:       amount,
 			Currency:     currency,
+			AddedByID:    addedById,
+			AddedByName:  addedByName,
 			PaidById:     paidById,
 			PaidByName:   paidByName,
 			SplitType:    model.SplitTypesMap[splitType],
@@ -799,6 +801,8 @@ func (db *Dynamo) CreateExpense(
 			Description:  description,
 			Amount:       amount,
 			Currency:     currency,
+			AddedByID:    addedById,
+			AddedByName:  addedByName,
 			PaidById:     paidById,
 			PaidByName:   paidByName,
 			SplitType:    model.SplitTypesMap[splitType],
@@ -979,6 +983,8 @@ func (db *Dynamo) CreateExpense(
 		Description:  description,
 		Amount:       amount,
 		Currency:     currency,
+		AddedByID:    addedById,
+		AddedByName:  addedByName,
 		PaidById:     paidById,
 		PaidByName:   paidByName,
 		SplitType:    model.SplitTypesMap[splitType],
@@ -989,6 +995,35 @@ func (db *Dynamo) CreateExpense(
 		ExpenseType:  model.ExpenseTypesMap[expenseType],
 		GroupID:      db.GroupSK("NONGROUP"),
 	}, nil
+}
+
+func (db *Dynamo) CreateComment(comment, expenseID, addedByID, addedByName string) (*model.Comment, error) {
+	commentID := uuid.New().String()
+	cc := &model.Comment{
+		Base: model.Base{
+			PK:        expenseID,
+			SK:        db.CommentSK(commentID),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Comment:     comment,
+		AddedByID:   addedByID,
+		AddedByName: addedByName,
+	}
+	commentEntry, err := dynamodbattribute.MarshalMap(cc)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.Client.PutItem(&dynamodb.PutItemInput{
+		Item:      commentEntry,
+		TableName: aws.String(config.SPLITBUCKS_TABLE),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return cc, nil
 }
 
 func (db *Dynamo) GetActivities(groupIDs []string, userID string) ([]*model.Activity, error) {
@@ -1252,4 +1287,12 @@ func (db *Dynamo) ActivityPK(id string) string {
 
 func (db *Dynamo) ActivitySK(id string) string {
 	return fmt.Sprintf("ACTIVITY#%s", id)
+}
+
+func (db *Dynamo) CommentPK(id string) string {
+	return fmt.Sprintf("COMMENT#%s", id)
+}
+
+func (db *Dynamo) CommentSK(id string) string {
+	return fmt.Sprintf("COMMENT#%s", id)
 }

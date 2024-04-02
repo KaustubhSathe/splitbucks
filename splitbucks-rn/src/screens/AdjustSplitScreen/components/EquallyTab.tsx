@@ -78,7 +78,7 @@ export function EquallyTab({ groupPK,
                 <TouchableOpacity onPress={() => {
                     const ss: Split = {};
                     membersChecked.forEach((included, i) => {
-                        if (included && members[i].PK !== paidBy.PK) {
+                        if (included) {
                             if (!ss[`${members[i].PK}:${paidBy.SK}`]) {
                                 ss[`${members[i].PK}:${paidBy.SK}`] = 0.0
                             }

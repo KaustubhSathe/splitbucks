@@ -12,7 +12,10 @@ export function ExpenseTile({ expense, user }: { expense: Expense, user: User })
         : <Text className="text-slate-500 mt-auto mb-auto">non involved</Text>
     const navigation = useNavigation<NativeStackNavigationProp<RootParamList>>();
 
-    return <TouchableOpacity className="flex flex-row justify-between pt-2 pb-2" onPress={() => navigation.navigate("ExpenseScreen")}>
+    return <TouchableOpacity className="flex flex-row justify-between pt-2 pb-2" onPress={() => navigation.navigate("ExpenseScreen", {
+        expense: expense,
+        user: user
+    })}>
         <Text className="text-slate-500 mt-auto mb-auto">{new Date(expense.ExpenseDate).toLocaleDateString()}</Text>
         <View className="flex mt-auto mb-auto">
             <Text className="text-base font-medium">{expense.Description}</Text>

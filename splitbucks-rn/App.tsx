@@ -40,7 +40,7 @@ function App() {
             headerTitle: "Adjust Split"
           }} />
           <Stack.Screen name="ExpenseScreen" component={ExpenseScreen} options={{
-            headerTitle: "Expense Screen"
+            headerShown: false
           }} />
         </Stack.Navigator>
       </Provider>

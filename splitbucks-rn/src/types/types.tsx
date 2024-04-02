@@ -47,7 +47,10 @@ export type RootParamList = {
     EmailSettingsScreen: undefined;
     PushNotificationSettingsScreen: undefined;
     AppScreen: undefined;
-    ExpenseScreen: undefined;
+    ExpenseScreen: {
+        expense: Expense | undefined;
+        user: User | undefined;
+    } | undefined;
 }
 
 export type GroupDashboardProps = BottomTabScreenProps<RootParamList, 'GroupDashboardScreen'>
@@ -62,6 +65,7 @@ export type GroupExpenseScreenProps = NativeStackScreenProps<RootParamList, "Gro
 export type FriendListScreenProps = NativeStackScreenProps<RootParamList, "FriendListScreen">;
 export type WhoPaidScreenProps = NativeStackScreenProps<RootParamList, "WhoPaidScreen">;
 export type AdjustSplitScreenProps = NativeStackScreenProps<RootParamList, "AdjustSplitScreen">;
+export type ExpenseScreenProps = NativeStackScreenProps<RootParamList, "ExpenseScreen">;
 
 export type User = {
     PK: string
@@ -115,6 +119,8 @@ export type Expense = {
     Description: string
     Amount: number
     Currency: string
+    AddedByID: string
+    AddedByName: string
     PaidById: string
     PaidByName: string
     SplitType: string
