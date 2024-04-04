@@ -12,6 +12,7 @@ import { FriendListScreen } from './src/screens/GroupsTab/FriendListScreen';
 import { WhoPaidScreen } from './src/screens/WhoPaidScreen/WhoPaidScreen';
 import { AdjustSplitScreen } from './src/screens/AdjustSplitScreen/AdjustSplitScreen';
 import { ExpenseScreen } from './src/screens/ExpenseScreen/ExpenseScreen';
+import { FriendSettingsScreen } from './src/screens/FriendsTab/FriendSettingsScreen';
 
 const Stack = createNativeStackNavigator<RootParamList>();
 
@@ -29,6 +30,9 @@ function App() {
           }} />
           <Stack.Screen name="GroupSettingsScreen" component={GroupSettingsScreen} options={{
             headerTitle: "Group Settings"
+          }} />
+          <Stack.Screen name="FriendSettingsScreen" component={FriendSettingsScreen} options={{
+            headerTitle: "Friend Settings"
           }} />
           <Stack.Screen name="FriendListScreen" component={FriendListScreen} options={{
             headerTitle: "Friends"

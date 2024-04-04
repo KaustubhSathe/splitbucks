@@ -9,6 +9,9 @@ export type RootParamList = {
     GroupSettingsScreen: {
         group: Group | undefined;
     } | undefined;
+    FriendSettingsScreen: {
+        friend: User
+    } | undefined;
     AddExpenseScreen: undefined;
     WhoPaidScreen: {
         groupPK: string | undefined;
@@ -61,6 +64,7 @@ export type ActivityScreenProps = BottomTabScreenProps<RootParamList, 'ActivityS
 export type AccountScreenProps = BottomTabScreenProps<RootParamList, 'AccountScreen'>
 export type LoginScreenProps = BottomTabScreenProps<RootParamList, 'LogInScreen'>
 export type FriendExpenseScreenProps = NativeStackScreenProps<RootParamList, "FriendExpenseScreen">;
+export type FriendSettingsScreenProps = NativeStackScreenProps<RootParamList, "FriendSettingsScreen">;
 export type GroupExpenseScreenProps = NativeStackScreenProps<RootParamList, "GroupExpenseScreen">;
 export type FriendListScreenProps = NativeStackScreenProps<RootParamList, "FriendListScreen">;
 export type WhoPaidScreenProps = NativeStackScreenProps<RootParamList, "WhoPaidScreen">;
@@ -177,5 +181,17 @@ export enum ActivityType {
     EXPENSE_ADDED,
     EXPENSE_EDITED,
     EXPENSE_DELETED,
+}
+
+
+export type Comment = {
+    PK: string
+    SK: string
+    CreatedAt: Date
+    UpdatedAt: Date
+    DeletedAt: Date
+    Comment: string
+    AddedByID: string
+    AddedByName: string
 }
 

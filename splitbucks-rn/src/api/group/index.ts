@@ -3,7 +3,7 @@ import { Group, User } from "../../types/types";
 import { RetryHelper } from "../helper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const USER_GROUPS = 'user_groups'
+export const USER_GROUPS = 'user_groups'
 const GROUP_MEMBERS = (group_id: string) => `group_members_${group_id}`
 
 export async function CreateGroup(groupName: string): Promise<Group> {

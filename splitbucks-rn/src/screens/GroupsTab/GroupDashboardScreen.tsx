@@ -17,7 +17,7 @@ export function GroupDashboardScreen({ navigation }: GroupDashboardProps) {
     const dispatch = useDispatch()
 
     useEffect(() => {
-        GetUserGroups().then(groups => dispatch(setGroups(groups)))
+        GetUserGroups().then(groups => dispatch(setGroups([...groups.filter(x => x.SK !== "GROUP#NONGROUP"), ...groups.filter(x => x.SK === "GROUP#NONGROUP")])))
     }, []);
 
     return (

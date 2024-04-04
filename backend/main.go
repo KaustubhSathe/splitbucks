@@ -33,6 +33,7 @@ type Lambdas struct {
 	GetActivitiesHandler            awscdklambdagoalpha.GoFunction
 	CreateCommentHandler            awscdklambdagoalpha.GoFunction
 	GetCommentsHandler              awscdklambdagoalpha.GoFunction
+	DeleteExpenseHandler            awscdklambdagoalpha.GoFunction
 }
 
 func CreateDynamoTable(stack awscdk.Stack) {
@@ -232,6 +233,17 @@ func CreateLambdas(stack awscdk.Stack) *Lambdas {
 		Architecture: awslambda.Architecture_ARM_64(),
 	})
 
+	deleteExpenseHandler := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("deleteExpenseHandler"), &awscdklambdagoalpha.GoFunctionProps{
+		Runtime: awslambda.Runtime_PROVIDED_AL2(),
+		Entry:   jsii.String("./handlers/expense/delete"),
+		Bundling: &awscdklambdagoalpha.BundlingOptions{
+			GoBuildFlags: jsii.Strings(`-ldflags "-s -w"`),
+		},
+		Role:         requiredRoles,
+		Environment:  envs,
+		Architecture: awslambda.Architecture_ARM_64(),
+	})
+
 	return &Lambdas{
 		LoginHandler:                    loginHandler,
 		UpdateEmailSettingsHandler:      updateEmailSettingsHandler,
@@ -248,6 +260,7 @@ func CreateLambdas(stack awscdk.Stack) *Lambdas {
 		GetActivitiesHandler:            getActivitiesHandler,
 		CreateCommentHandler:            createCommentHandler,
 		GetCommentsHandler:              getCommentsHandler,
+		DeleteExpenseHandler:            deleteExpenseHandler,
 	}
 }
 
@@ -359,6 +372,13 @@ func CreateHTTPApi(stack awscdk.Stack, lambdas *Lambdas) awscdkapigatewayv2alpha
 		Path:        jsii.String("/api/group_expenses"),
 		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_POST},
 		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.GetGroupExpensesHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
+	})
+
+	// delete expense API
+	splitbucksApi.AddRoutes(&awscdkapigatewayv2alpha.AddRoutesOptions{
+		Path:        jsii.String("/api/expense"),
+		Methods:     &[]awscdkapigatewayv2alpha.HttpMethod{awscdkapigatewayv2alpha.HttpMethod_DELETE},
+		Integration: awscdkapigatewayv2integrationsalpha.NewHttpLambdaIntegration(jsii.String("SplitbucksHttpLambdaIntegration"), lambdas.DeleteExpenseHandler, &awscdkapigatewayv2integrationsalpha.HttpLambdaIntegrationProps{}),
 	})
 
 	// get activities

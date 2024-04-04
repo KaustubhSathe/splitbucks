@@ -18,7 +18,7 @@ var dynamo *db.Dynamo
 func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// First authenticate the request only after that create Expense
 	splitbucks_id_token := request.Headers["splitbucks_id_token"]
-	_, authenticated, err := utils.Authenticate(splitbucks_id_token)
+	userInfo, authenticated, err := utils.Authenticate(splitbucks_id_token)
 	if err != nil || !authenticated {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 401,
@@ -27,7 +27,8 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	// Now parse body
 	body := struct {
-		GroupID string `json:"GroupID"`
+		GroupID   string `json:"GroupID"`
+		GroupType string `json:"GroupType"`
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
@@ -42,7 +43,13 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		dynamo = db.NewDynamo()
 	}
 
-	expenses, err := dynamo.GetGroupExpenses(body.GroupID)
+	var expenses []*model.Expense
+	if body.GroupType == "GROUP" {
+		expenses, err = dynamo.GetGroupExpenses(body.GroupID)
+	} else {
+		expenses, err = dynamo.GetNonGroupExpenses(dynamo.UserPK(userInfo.Email))
+	}
+
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,

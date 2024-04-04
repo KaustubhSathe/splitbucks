@@ -17,7 +17,7 @@ export function GroupTile({ group }: { group: Group }) {
                     let owedAmount = 0.0;
                     if (group.Owes) {
                         group.Members.forEach(member => {
-                            owedAmount += group.Owes[`${member}:${user.PK}`] - group.Owes[`${user.PK}:${member}`]
+                            owedAmount += group?.Owes[`${member}:${user.PK}`] ?? 0 - group?.Owes[`${user.PK}:${member}`] ?? 0
                         })
                         setOwedAmount(owedAmount)
                     }
