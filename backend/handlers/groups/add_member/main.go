@@ -26,10 +26,11 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	// Now parse body
 	body := struct {
-		MemberID   string `json:"MemberID"`
-		MemberName string `json:"MemberName"`
-		GroupID    string `json:"GroupID"`
-		GroupName  string `json:"GroupName"`
+		MemberID           string `json:"MemberID"`
+		MemberName         string `json:"MemberName"`
+		GroupID            string `json:"GroupID"`
+		GroupName          string `json:"GroupName"`
+		NotifyOnAddToGroup bool   `json:"NotifyOnAddToGroup"`
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
@@ -51,19 +52,21 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	}
 
 	// Now also send email to member to notify
-	if ses == nil {
-		ses, err = db.NewSES()
+	if body.NotifyOnAddToGroup {
+		if ses == nil {
+			ses, err = db.NewSES()
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 500,
+				}, nil
+			}
+		}
+		err = ses.NotifyAddedToGroup(body.MemberID[5:], body.MemberName, userInfo.Name, userInfo.Email, body.GroupName)
 		if err != nil {
 			return events.APIGatewayProxyResponse{
 				StatusCode: 500,
 			}, nil
 		}
-	}
-	err = ses.NotifyAddedToGroup(body.MemberID[5:], body.MemberName, userInfo.Name, userInfo.Email, body.GroupName)
-	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: 500,
-		}, nil
 	}
 
 	return events.APIGatewayProxyResponse{

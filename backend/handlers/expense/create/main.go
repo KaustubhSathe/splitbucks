@@ -13,6 +13,7 @@ import (
 )
 
 var dynamo *db.Dynamo
+var mailer *db.SES
 
 // This will be a POST request
 func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -27,19 +28,20 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	// Now parse body
 	body := struct {
-		Description  string             `json:"Description"`
-		Amount       float32            `json:"Amount"`
-		Currency     string             `json:"Currency"`
-		PaidById     string             `json:"PaidById"` // userid of paid by user
-		PaidByName   string             `json:"PaidByName"`
-		SplitType    string             `json:"SplitType"` // Split type: EQUALLY, UNEQUALLY, PERCENTAGES
-		Split        map[string]float32 `json:"Split"`     // split is map of user-id to amount
-		ExpenseDate  time.Time          `json:"ExpenseDate"`
-		Note         string             `json:"Note"`
-		SplitMembers []string           `json:"SplitMembers"`
-		ExpenseType  string             `json:"ExpenseType"` // expense type - GROUP/NONGROUP
-		GroupID      string             `json:"GroupID"`
-		GroupName    string             `json:"GroupName"`
+		Description          string             `json:"Description"`
+		Amount               float32            `json:"Amount"`
+		Currency             string             `json:"Currency"`
+		PaidById             string             `json:"PaidById"` // userid of paid by user
+		PaidByName           string             `json:"PaidByName"`
+		SplitType            string             `json:"SplitType"` // Split type: EQUALLY, UNEQUALLY, PERCENTAGES
+		Split                map[string]float32 `json:"Split"`     // split is map of user-id to amount
+		ExpenseDate          time.Time          `json:"ExpenseDate"`
+		Note                 string             `json:"Note"`
+		SplitMembers         []string           `json:"SplitMembers"`
+		ExpenseType          string             `json:"ExpenseType"` // expense type - GROUP/NONGROUP
+		GroupID              string             `json:"GroupID"`
+		GroupName            string             `json:"GroupName"`
+		NotifyOnExpenseAdded bool               `json:"NotifyOnExpenseAdded"`
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
@@ -75,6 +77,29 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 		}, nil
+	}
+
+	if body.NotifyOnExpenseAdded {
+		if mailer == nil {
+			mailer, err = db.NewSES()
+			if err != nil {
+				return events.APIGatewayProxyResponse{
+					StatusCode: 500,
+				}, nil
+			}
+		}
+		err = mailer.NotifyExpenseAdded(
+			body.Description,
+			userInfo.Email, // added by email
+			userInfo.Name, // added by name
+			body.SplitMembers,
+			body.GroupName,
+		)
+		if err != nil {
+			return events.APIGatewayProxyResponse{
+				StatusCode: 500,
+			}, nil
+		}
 	}
 
 	return events.APIGatewayProxyResponse{
