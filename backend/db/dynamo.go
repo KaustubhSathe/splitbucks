@@ -1506,6 +1506,47 @@ func (db *Dynamo) GetMembers(groupID string) ([]*model.User, error) {
 	return members, nil
 }
 
+func (db *Dynamo) GetUsers(userIDs []string) ([]*model.User, error) {
+	getKeys := []map[string]*dynamodb.AttributeValue{}
+
+	for i := 0; i < len(userIDs); i++ {
+		getKeys = append(getKeys, map[string]*dynamodb.AttributeValue{
+			"PK": {
+				S: aws.String(userIDs[i]),
+			},
+			"SK": {
+				S: aws.String(userIDs[i]),
+			},
+		})
+	}
+
+	fns, err := db.Client.BatchGetItem(&dynamodb.BatchGetItemInput{
+		RequestItems: map[string]*dynamodb.KeysAndAttributes{
+			config.SPLITBUCKS_TABLE: {
+				Keys: getKeys,
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	users := []*model.User{}
+
+	if len(fns.Responses) > 0 {
+		for key, value := range fns.Responses {
+			fmt.Printf("Items retrieved from table %s:\n", key)
+			for _, item := range value {
+				var member model.User
+				_ = dynamodbattribute.UnmarshalMap(item, &member)
+				users = append(users, &member)
+			}
+		}
+	}
+
+	return users, nil
+}
+
 func (db *Dynamo) GroupPK(groupID string) string {
 	return fmt.Sprintf("GROUP#%s", groupID)
 }
@@ -1533,7 +1574,6 @@ func (db *Dynamo) ExpensePK(id string) string {
 func (db *Dynamo) ExpenseSK(id string) string {
 	return fmt.Sprintf("EXPENSE#%s", id)
 }
-
 
 func (db *Dynamo) ActivityPK(id string) string {
 	return fmt.Sprintf("ACTIVITY#%s", id)
