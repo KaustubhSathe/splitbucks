@@ -21,6 +21,7 @@ type Expense struct {
 	SplitMembers []string
 	ExpenseType  ExpenseType
 	GroupID      string
+	Settlement   bool
 }
 
 func (in *Expense) Stringify() string {

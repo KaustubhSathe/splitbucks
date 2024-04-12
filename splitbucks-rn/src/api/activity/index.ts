@@ -3,7 +3,7 @@ import { Activity } from "../../types/types";
 import { RetryHelper } from "../helper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const ACTIVITIES = 'activities'
+export const ACTIVITIES = 'activities'
 
 export async function GetActivities(groupIDs: string[]) {
     let activities: Activity[]  = JSON.parse(await AsyncStorage.getItem(ACTIVITIES))

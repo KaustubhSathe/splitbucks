@@ -6,6 +6,10 @@ export type RootParamList = {
     GroupDashboardScreen: undefined;
     GroupScreen: undefined;
     CreateGroupScreen: undefined;
+    BalanceToSettleScreen: {
+        group: Group;
+        user: User;
+    } | undefined;
     GroupSettingsScreen: {
         group: Group | undefined;
     } | undefined;
@@ -36,6 +40,7 @@ export type RootParamList = {
     AddFriendScreen: undefined;
     FriendExpenseScreen: {
         friend: User;
+        user: User;
     } | undefined;
     GroupExpenseScreen: {
         group: Group | undefined;
@@ -50,9 +55,20 @@ export type RootParamList = {
     EmailSettingsScreen: undefined;
     PushNotificationSettingsScreen: undefined;
     AppScreen: undefined;
+    GroupSpendingScreen: {
+        groupExpenses: Expense[],
+        user: User,
+        group: Group
+    } | undefined;
     ExpenseScreen: {
         expense: Expense | undefined;
         user: User | undefined;
+    } | undefined;
+    RecordPaymentScreen: {
+        user: User,
+        member: User,
+        owedAmount: number,
+        group: Group
     } | undefined;
 }
 
@@ -66,10 +82,13 @@ export type LoginScreenProps = BottomTabScreenProps<RootParamList, 'LogInScreen'
 export type FriendExpenseScreenProps = NativeStackScreenProps<RootParamList, "FriendExpenseScreen">;
 export type FriendSettingsScreenProps = NativeStackScreenProps<RootParamList, "FriendSettingsScreen">;
 export type GroupExpenseScreenProps = NativeStackScreenProps<RootParamList, "GroupExpenseScreen">;
+export type BalanceToSettleScreenProps = NativeStackScreenProps<RootParamList, "BalanceToSettleScreen">;
+export type GroupSpendingScreenProps = NativeStackScreenProps<RootParamList, "GroupSpendingScreen">;
 export type FriendListScreenProps = NativeStackScreenProps<RootParamList, "FriendListScreen">;
 export type WhoPaidScreenProps = NativeStackScreenProps<RootParamList, "WhoPaidScreen">;
 export type AdjustSplitScreenProps = NativeStackScreenProps<RootParamList, "AdjustSplitScreen">;
 export type ExpenseScreenProps = NativeStackScreenProps<RootParamList, "ExpenseScreen">;
+export type RecordPaymentScreenProps = NativeStackScreenProps<RootParamList, "RecordPaymentScreen">;
 
 export type User = {
     PK: string
@@ -105,6 +124,7 @@ export type Group = {
     UpdatedAt: Date
     DeletedAt: Date
     GroupName: string
+    GroupType: string
     Admin: string
     Members: string[]
     Owes: Split // Map string to number
@@ -134,6 +154,7 @@ export type Expense = {
     SplitMembers: string[]
     ExpenseType: string
     GroupID: string
+    Settlement: boolean
 }
 
 export type Activity = {
@@ -146,6 +167,7 @@ export type Activity = {
     CreatedByID: string
     CreatedByName: string
     GroupID: string
+    GroupType: string
     GroupName: string
     EditedByID: string
     EditedByName: string

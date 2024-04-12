@@ -69,10 +69,11 @@ export function AddExpenseScreen() {
             expenseSplit,
             expenseDate,
             expenseNote,
-            expenseSplitMembers?.map(x => x.PK),
+            [...expenseSplitMembers?.map(x => x.PK).filter(x => x !== expensePaidBy.PK), expensePaidBy.PK],
             expenseType,
             selectedGroupId,
-            selectedGroupName
+            selectedGroupName,
+            false
         ).then(res => {
             navigation.navigate("GroupsTab")
         })

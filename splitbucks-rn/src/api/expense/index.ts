@@ -2,8 +2,8 @@ import { API_DOMAIN } from "@env"
 import { RetryHelper } from "../helper"
 import { Comment, Expense } from "../../types/types"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import exp from "constants"
 import { USER_GROUPS } from "../group"
+import { ACTIVITIES } from "../activity"
 
 const GROUP_EXPENSES = (groupID: string) => `group_expenses_${groupID}`
 
@@ -21,6 +21,7 @@ export async function AddExpense(
     expenseType: string,
     groupID: string,
     groupName: string,
+    settlement: boolean
 ) {
     const res = await RetryHelper<Expense>(`${API_DOMAIN}/api/add_expense`, {
         method: "POST",
@@ -38,14 +39,32 @@ export async function AddExpense(
             ExpenseType: expenseType,
             GroupID: groupID,
             GroupName: groupName,
+            Settlement: settlement,
         })
     })
     await AsyncStorage.removeItem(GROUP_EXPENSES(groupID))
+    await AsyncStorage.removeItem(USER_GROUPS)
+    await AsyncStorage.removeItem(ACTIVITIES)
     return res
 }
 
 
 export async function GetGroupExpenses(groupID: string, groupType: string): Promise<Expense[]> {
+    if (groupType === "NONGROUP") {
+        let expenses: Expense[] = JSON.parse(await AsyncStorage.getItem("NONGROUP"))
+        if (expenses) {
+            return expenses;
+        }
+        expenses =  await RetryHelper<Expense[]>(`${API_DOMAIN}/api/group_expenses`, {
+            method: "POST",
+            body: JSON.stringify({
+                GroupID: groupID,
+                GroupType: groupType
+            })
+        })
+        await AsyncStorage.setItem("NONGROUP", JSON.stringify(expenses))
+        return expenses    
+    }
     let expenses: Expense[] = JSON.parse(await AsyncStorage.getItem(GROUP_EXPENSES(groupID)))
     if (expenses) {
         return expenses;
@@ -70,20 +89,24 @@ export async function DeleteExpense(expense: Expense): Promise<Expense> {
     })
     await AsyncStorage.removeItem(USER_GROUPS)
     await AsyncStorage.removeItem(GROUP_EXPENSES(expense.GroupID))
+    await AsyncStorage.removeItem(ACTIVITIES)
     return res
 }
 
 const EXPENSE_COMMENTS = (id) => `comments_${id}`
 
-export async function CreateComment(comment: string, expenseID: string): Promise<Comment> {
+export async function CreateComment(comment: string, expenseID: string, splitMembers: string[], expenseDescription: string): Promise<Comment> {
     let res: Comment = await RetryHelper<Comment>(`${API_DOMAIN}/api/comment`, {
         method: "POST",
         body: JSON.stringify({
             Comment: comment,
-            ExpenseID: expenseID
+            ExpenseID: expenseID,
+            SplitMembers: splitMembers,
+		    ExpenseDescription: expenseDescription
         })
     })
     await AsyncStorage.removeItem(EXPENSE_COMMENTS(expenseID))
+    await AsyncStorage.removeItem(ACTIVITIES)
     return res
 }
 

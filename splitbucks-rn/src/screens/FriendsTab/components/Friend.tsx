@@ -3,13 +3,14 @@ import { RootParamList, User } from "../../../types/types";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-export function Friend({ friend }: { friend: User }) {
+export function Friend({ friend, user }: { friend: User, user: User }) {
     const navigation = useNavigation<NativeStackNavigationProp<RootParamList>>();
 
     return (
         <TouchableHighlight underlayColor="rgb(226, 232, 240)" onPress={() => {
             navigation.navigate("FriendExpenseScreen", {
                 friend: friend,
+                user: user
             })
         }} className="bg-sl w-ful flex-row p-2">
             <>

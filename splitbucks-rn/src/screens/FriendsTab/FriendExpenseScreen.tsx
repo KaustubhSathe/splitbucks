@@ -7,21 +7,36 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { GetUserGroups } from "../../api/group";
 import { Authenticate } from "../../api/profile";
 import { GetGroupExpenses } from "../../api/expense";
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
+
 
 export function FriendExpenseScreen() {
     const route = useRoute<FriendExpenseScreenProps['route']>();
     const friend = route.params.friend
+    const user = route.params.user
     const navigation = useNavigation<NativeStackNavigationProp<RootParamList>>();
-    const [settleStatements, setSettleStatements] = useState<{
-        ower: string,
-        owed: string,
-        amount: number
-    }[]>([]);
     const [sharedGroups, setSharedGroups] = useState<Group[]>([]);
     const [nonSharedExpenses, setNonSharedExpenses] = useState<Expense[]>([]);
+    const settleStatements: string[] = sharedGroups.reduce((tot, gr) => {
+        const owedAmount = (gr.Owes[`${friend.PK}:${user.PK}`] ?? 0) - (gr.Owes[`${user.PK}:${friend.PK}`] ?? 0);
+        if (owedAmount !== 0.0) {
+            const ss = owedAmount >= 0.0 ? `${friend.Name} owes you ${owedAmount} in group ${gr.GroupName}` : `You owe ${friend.Name} ${owedAmount} in group ${gr.GroupName}`
+            return [...tot, ss]
+        }
+        return tot
+    }, [] as string[])
+
+    const total = nonSharedExpenses.reduce((tot, ex) => tot + (ex.Split[`${friend.PK}:${user.PK}`] ?? 0) - (ex.Split[`${user.PK}:${friend.PK}`] ?? 0), 0)
+    if (total !== 0.0) {
+        const ss = total >= 0.0 ? `${friend.Name} owes you ${total} in non-group expenses.` : `You owe ${friend.Name} ${total} in non-group expenses.`
+        settleStatements.push(ss)
+    }
 
     useEffect(() => {
-        GetUserGroups().then(groups => setSharedGroups(groups.filter(gr => gr.Members.includes(friend.PK))))
+        GetUserGroups().then(groups => {
+            setSharedGroups(groups.filter(gr => gr.Members.includes(friend.PK)))
+        })
         // Also fetch the non-group expenses
         GetGroupExpenses("", "NONGROUP").then(expenses => {
             setNonSharedExpenses(expenses.filter(x => x.SplitMembers.includes(friend.PK)))
@@ -51,18 +66,9 @@ export function FriendExpenseScreen() {
             </View>
             <Text className="mt-10 ml-7 text-xl font-normal">{route.params?.friend.Name}</Text>
             {
-                settleStatements.length === 0 ?
-                    <Text className="ml-4 mt-2">You are all settled up.</Text>
-                    : settleStatements.map(x => x.amount > 0
-                        ? <Text className="ml-4">You owe {x.owed} {x.amount}.</Text>
-                        : <Text className="ml-4">{x.owed} owes you {-x.amount}.</Text>
-                    )
+                settleStatements.length === 0 ? <Text className="ml-4 mt-2">You are all settled up.</Text>
+                    : settleStatements.map(x => <Text className="ml-4 mt-2" key={x}>{x}</Text>)
             }
-            <View className="flex-row justify-evenly mt-2">
-                <TouchableOpacity className="w-28 h-10 bg-orange-500 flex justify-center rounded-xl">
-                    <Text className="text-base font-semibold text-white ml-auto mr-auto">Settle Up</Text>
-                </TouchableOpacity>
-            </View>
             <View className="p-4">
                 {sharedGroups.map(gr => <SharedGroupTile key={gr.SK} group={gr} friend={friend} />)}
             </View>
@@ -116,7 +122,7 @@ function SharedGroupTile({ group, friend }: { group: Group, friend: User }) {
             // Owed amount calculation 
             const userPK = user.PK
             const friendPK = friend.PK
-            const amount = group.Owes[`${friendPK}:${userPK}`] ?? 0 - group.Owes[`${userPK}:${friendPK}`] ?? 0
+            const amount = (group.Owes[`${friendPK}:${userPK}`] ?? 0) - (group.Owes[`${userPK}:${friendPK}`] ?? 0)
             setOwedAmount(amount)
         })
     }, [group, friend])

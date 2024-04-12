@@ -41,6 +41,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		ExpenseType  string             `json:"ExpenseType"` // expense type - GROUP/NONGROUP
 		GroupID      string             `json:"GroupID"`
 		GroupName    string             `json:"GroupName"`
+		Settlement   bool               `json:"Settlement"`
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
@@ -71,13 +72,13 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		body.ExpenseType,
 		body.GroupID,
 		body.GroupName,
+		body.Settlement,
 	)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 		}, nil
 	}
-
 
 	// Now notify splitmembers that expense is added
 	splitMembers, err := dynamo.GetUsers(body.SplitMembers)

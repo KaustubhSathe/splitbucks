@@ -9,7 +9,7 @@ export function ExpenseTile({ expense, user }: { expense: Expense, user: User })
         expense.PaidById === user.PK ?
             <Text className="text-green-500 mt-auto mb-auto">you lent {expense.Amount}</Text> :
             <Text className="text-red-500 mt-auto mb-auto">you borrowed {expense?.Split?.[`${user.PK}:${expense.PaidById}`]}</Text>
-        : <Text className="text-slate-500 mt-auto mb-auto">non involved</Text>
+        : <Text className="text-slate-500 mt-auto mb-auto">not involved</Text>
     const navigation = useNavigation<NativeStackNavigationProp<RootParamList>>();
 
     return <TouchableOpacity className="flex flex-row justify-between pt-2 pb-2" onPress={() => navigation.navigate("ExpenseScreen", {
@@ -17,10 +17,10 @@ export function ExpenseTile({ expense, user }: { expense: Expense, user: User })
         user: user
     })}>
         <Text className="text-slate-500 mt-auto mb-auto">{new Date(expense.ExpenseDate).toLocaleDateString()}</Text>
-        <View className="flex mt-auto mb-auto">
-            <Text className="text-base font-medium">{expense.Description}</Text>
-            <Text className="font-normal text-sm text-slate-500">{subDescription}</Text>
+        <View className="flex-col flex mt-auto mb-auto">
+            {expense.Settlement ? <Text className="text-sm font-medium text-wrap">{expense.PaidByName} paid {user.Name} {expense.Amount}</Text> : <Text className="text-base font-medium">{expense.Description}</Text>}
+            {!expense.Settlement && <Text className="font-normal text-sm text-slate-500">{subDescription}</Text>}
         </View>
-        {expenseTransaction}
+        {!expense.Settlement && expenseTransaction}
     </TouchableOpacity>
 }

@@ -13,6 +13,9 @@ import { WhoPaidScreen } from './src/screens/WhoPaidScreen/WhoPaidScreen';
 import { AdjustSplitScreen } from './src/screens/AdjustSplitScreen/AdjustSplitScreen';
 import { ExpenseScreen } from './src/screens/ExpenseScreen/ExpenseScreen';
 import { FriendSettingsScreen } from './src/screens/FriendsTab/FriendSettingsScreen';
+import { GroupSpendingScreen } from './src/screens/GroupSpendingScreen/GroupSpendingScreen';
+import { BalanceToSettleScreen } from './src/screens/BalanceToSettleScreen/BalanceToSettleScreen';
+import { RecordPaymentScreen } from './src/screens/RecordPaymentScreen/RecordPaymentScreen';
 
 const Stack = createNativeStackNavigator<RootParamList>();
 
@@ -45,6 +48,18 @@ function App() {
           }} />
           <Stack.Screen name="ExpenseScreen" component={ExpenseScreen} options={{
             headerShown: false
+          }} />
+          <Stack.Screen name="GroupSpendingScreen" component={GroupSpendingScreen} options={{
+            headerShown: true,
+            title: "Group spending summary"
+          }} />
+          <Stack.Screen name="BalanceToSettleScreen" component={BalanceToSettleScreen} options={{
+            headerShown: true,
+            title: "Select a balance to settle"
+          }} />
+          <Stack.Screen name="RecordPaymentScreen" component={RecordPaymentScreen} options={{
+            headerShown: true,
+            title: "Record payment"
           }} />
         </Stack.Navigator>
       </Provider>

@@ -49,8 +49,16 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		}, nil
 	}
 
+	// First fetch the user config of friend and send email if NotifyOnAddAsFriend is true
+	member, err := dynamo.GetUsers([]string{dynamo.UserPK(body.EmailID)})
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+		}, nil
+	}
+
 	// Now also send email to member to notify
-	if body.NotifyOnAddAsFriend {
+	if member[0].NotifyOnAddAsFriend {
 		if mailer == nil {
 			mailer, err = db.NewSES()
 			if err != nil {

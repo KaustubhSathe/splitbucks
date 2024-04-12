@@ -10,6 +10,9 @@ import { GetGroupExpenses } from "../../api/expense";
 import { ExpenseTile } from "./components/ExpenseTile";
 import { AntDesign } from '@expo/vector-icons';
 import exp from "constants";
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid';
+
 
 export function GroupExpenseScreen() {
     const route = useRoute<GroupExpenseScreenProps['route']>();
@@ -71,7 +74,7 @@ export function GroupExpenseScreen() {
                 })
             }
         })
-    }, [])
+    }, [group, user])
 
     return (
         <View className="bg-white h-full relative">
@@ -97,18 +100,25 @@ export function GroupExpenseScreen() {
                 settleStatements.length === 0 ?
                     <Text className="ml-4 mt-2">You are all settled up.</Text>
                     : settleStatements.map(x => x.amount > 0
-                        ? <Text className="ml-4">You owe {x.owed} {x.amount}.</Text>
-                        : <Text className="ml-4">{x.owed} owes you {-x.amount}.</Text>
+                        ? <Text className="ml-4" key={uuidv4()}>You owe {x.owed} {x.amount}.</Text>
+                        : <Text className="ml-4" key={uuidv4()}>{x.owed} owes you {-x.amount}.</Text>
                     )
             }
             <View className="flex-row justify-evenly mt-2">
-                <TouchableOpacity className="w-28 h-10 bg-orange-500 flex justify-center rounded-xl">
+                <TouchableOpacity className="w-28 h-10 bg-orange-500 flex justify-center rounded-xl" onPress={() => navigation.navigate("BalanceToSettleScreen", {
+                    group: group,
+                    user: user
+                })}>
                     <Text className="text-base font-semibold text-white ml-auto mr-auto">Settle Up</Text>
                 </TouchableOpacity>
                 <TouchableOpacity className="w-28 h-10 bg-slate-300 flex justify-center rounded-xl ">
                     <Text className="text-base font-semibold text-black ml-auto mr-auto">Balances</Text>
                 </TouchableOpacity>
-                <TouchableOpacity className="w-28 h-10 bg-slate-300 flex justify-center rounded-xl ">
+                <TouchableOpacity className="w-28 h-10 bg-slate-300 flex justify-center rounded-xl" onPress={() => navigation.navigate("GroupSpendingScreen", {
+                    groupExpenses: expenses,
+                    user: user,
+                    group: group
+                })}>
                     <Text className="text-base font-semibold text-black ml-auto mr-auto">Totals</Text>
                 </TouchableOpacity>
             </View>

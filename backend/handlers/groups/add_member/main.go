@@ -26,11 +26,10 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	// Now parse body
 	body := struct {
-		MemberID           string `json:"MemberID"`
-		MemberName         string `json:"MemberName"`
-		GroupID            string `json:"GroupID"`
-		GroupName          string `json:"GroupName"`
-		NotifyOnAddToGroup bool   `json:"NotifyOnAddToGroup"`
+		MemberID   string `json:"MemberID"`
+		MemberName string `json:"MemberName"`
+		GroupID    string `json:"GroupID"`
+		GroupName  string `json:"GroupName"`
 	}{}
 	err = json.Unmarshal([]byte(request.Body), &body)
 	if err != nil {
@@ -51,8 +50,16 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		}, nil
 	}
 
+	// First fetch the member config from database, if NotifyOnAddToGroup is true then only send email
+	member, err := dynamo.GetUsers([]string{body.MemberID})
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+		}, nil
+	}
+
 	// Now also send email to member to notify
-	if body.NotifyOnAddToGroup {
+	if member[0].NotifyOnAddToGroup {
 		if ses == nil {
 			ses, err = db.NewSES()
 			if err != nil {

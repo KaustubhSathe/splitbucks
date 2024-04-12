@@ -174,12 +174,12 @@ func (mailer *SES) NotifyExpenseAdded(
 			Body: &ses.Body{
 				Text: &ses.Content{
 					Charset: aws.String(CharSet),
-					Data:    aws.String(fmt.Sprintf("Hey! %s just added '%s' to the group '%s'.", addedByName, description, groupName)),
+					Data:    aws.String(fmt.Sprintf("Hey! %s just added expense '%s' to the group '%s'.", addedByName, description, groupName)),
 				},
 			},
 			Subject: &ses.Content{
 				Charset: aws.String(CharSet),
-				Data:    aws.String(fmt.Sprintf("'%s' (%f) added by %s.", description, amount, addedByName)),
+				Data:    aws.String(fmt.Sprintf("'%s' (%f) expense added by %s.", description, amount, addedByName)),
 			},
 		},
 		Source: aws.String(Sender),

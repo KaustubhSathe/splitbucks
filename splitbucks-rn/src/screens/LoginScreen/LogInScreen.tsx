@@ -65,7 +65,6 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
                         await GoogleSignin.hasPlayServices();
                         const userInfo = await GoogleSignin.signIn();
                         await AsyncStorage.setItem('idToken', userInfo.idToken as string);
-                        console.log(userInfo)
                         // Now save this profile in backend and log into app
                         const user: User = await Authenticate()
                         dispatch(setUser(user));

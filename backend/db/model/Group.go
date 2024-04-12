@@ -7,8 +7,9 @@ type Group struct {
 	Base
 	Admin     string
 	GroupName string
-	Members   []string // will contain array of member user-ids
-	Owes     map[string]float32 // this will  be a map of <user_id>:<user_id>:currency --> amount
+	GroupType string
+	Members   []string           // will contain array of member user-ids
+	Owes      map[string]float32 // this will  be a map of <user_id>:<user_id>:currency --> amount
 }
 
 func (in *Group) Stringify() string {

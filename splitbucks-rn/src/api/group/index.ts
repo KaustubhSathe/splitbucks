@@ -2,6 +2,7 @@ import { API_DOMAIN } from "@env";
 import { Group, User } from "../../types/types";
 import { RetryHelper } from "../helper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ACTIVITIES } from "../activity";
 
 export const USER_GROUPS = 'user_groups'
 const GROUP_MEMBERS = (group_id: string) => `group_members_${group_id}`
@@ -14,6 +15,7 @@ export async function CreateGroup(groupName: string): Promise<Group> {
         })
     })
     await AsyncStorage.removeItem(USER_GROUPS)
+    await AsyncStorage.removeItem(ACTIVITIES)
     return group
 }
 
@@ -56,5 +58,6 @@ export async function AddMember(group_id: string, group_name: string, member_id:
     })
     await AsyncStorage.removeItem(USER_GROUPS)
     await AsyncStorage.removeItem(GROUP_MEMBERS(group_id))
+    await AsyncStorage.removeItem(ACTIVITIES)
     return group
 }

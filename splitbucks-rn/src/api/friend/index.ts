@@ -2,6 +2,7 @@ import { API_DOMAIN } from "@env";
 import { User } from "../../types/types";
 import { RetryHelper } from "../helper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ACTIVITIES } from "../activity";
 
 const FRIENDS = 'friends'
 
@@ -28,5 +29,6 @@ export async function AddFriend(email: string, name: string) {
         })
     })
     await AsyncStorage.removeItem(FRIENDS)
+    await AsyncStorage.removeItem(ACTIVITIES)
     return friend
 }

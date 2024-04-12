@@ -7,6 +7,7 @@ type Activity struct {
 	CreatedByID        string // user id of admin
 	CreatedByName      string // user name of admin
 	GroupID            string // created group ID
+	GroupType          string
 	GroupName          string // created group name
 	EditedByID         string // user name of editor
 	EditedByName       string // user id of editor

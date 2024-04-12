@@ -1,4 +1,4 @@
-import { Image, Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Linking, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { AccountScreenProps } from "../../types/types";
 import { useSelector } from "react-redux";
 import { RootState } from "../../lib/redux/store";
@@ -26,9 +26,6 @@ export function AccountScreen({ navigation }: AccountScreenProps) {
                         <Text className="text-center w-full">{user.Name}</Text>
                         <Text className="">{user.Email}</Text>
                     </View>
-                    <Pressable className="mb-auto mt-auto justify-center">
-                        <AntDesign name="edit" size={24} color="black" />
-                    </Pressable>
                 </View>
             </View>
             <View className="bg-slate-300 h-[2px] w-full mb-[2%]" />
@@ -45,12 +42,12 @@ export function AccountScreen({ navigation }: AccountScreenProps) {
                     <FontAwesome name="star" size={24} color="black" />
                     <Text>Rate Splitbucks</Text>
                 </View>
-                <Pressable className="flex-row gap-4 mb-4" onPress={() => {
+                <TouchableOpacity className="flex-row gap-4 mb-4" onPress={() => {
                     Linking.openURL(`mailto:kaustubhsathe39443@gmail.com`)
                 }}>
                     <MaterialIcons name="contact-support" size={24} color="black" />
                     <Text>Contact Splitbucks Support</Text>
-                </Pressable>
+                </TouchableOpacity>
             </View>
             <View className="bg-slate-300 h-[2px] w-full mb-[2%]" />
             <View className="pl-4 pt-4">

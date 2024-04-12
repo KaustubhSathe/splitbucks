@@ -22,7 +22,7 @@ export function ExpenseScreen() {
     const [deleteConfirmation, setDeleteConfirmation] = useState<boolean>(false);
 
     const saveComment = useCallback(async () => {
-        const cc = await CreateComment(comment, expense?.PK)
+        const cc = await CreateComment(comment, expense?.SK, expense?.SplitMembers, expense?.Description)
         setComment("")
         setComments([...comments, cc])
     }, [comment, expense])
@@ -37,7 +37,7 @@ export function ExpenseScreen() {
                 setMembersMap(x)
             })
         }
-        GetComments(expense?.PK).then(comments => {
+        GetComments(expense?.SK).then(comments => {
             setComments(comments.sort((a, b) => new Date(a.CreatedAt).getTime() - new Date(b.CreatedAt).getTime()))
         })
     }, [])
@@ -58,18 +58,18 @@ export function ExpenseScreen() {
         <View className="p-4">
             <Text className="text-2xl font-semibold">{expense?.Description}</Text>
             <Text className="text-base font-normal">{expense?.Currency}.{expense?.Amount}</Text>
-            <Text>Added by {expense.AddedByID === user?.PK ? "you" : expense.AddedByName} on {new Date(expense.CreatedAt).toLocaleDateString()}</Text>
+            <Text>Added by {expense?.AddedByID === user?.PK ? "you" : expense.AddedByName} on {new Date(expense.CreatedAt).toLocaleDateString()}</Text>
             {
-                new Date(expense.CreatedAt).getTime() === new Date(expense.UpdatedAt).getTime()
+                new Date(expense?.CreatedAt).getTime() === new Date(expense.UpdatedAt).getTime()
                     ? null
-                    : <Text>Updated by {expense.AddedByID === user?.PK ? "you" : expense.AddedByName} on {new Date(expense.CreatedAt).toLocaleDateString()}</Text>
+                    : <Text>Updated by {expense?.AddedByID === user?.PK ? "you" : expense?.AddedByName} on {new Date(expense.CreatedAt).toLocaleDateString()}</Text>
             }
-            <Text>{expense.PaidById === user?.PK ? "You" : expense.PaidByName} paid {expense?.Currency}.{expense?.Amount}</Text>
+            <Text>{expense?.PaidById === user?.PK ? "You" : expense.PaidByName} paid {expense?.Currency}.{expense?.Amount}</Text>
             {membersMap && expense?.SplitMembers.map(x => <Text key={x}> - {membersMap?.get(x)?.PK === user?.PK ? "You" : membersMap?.get(x)?.Name} owes {expense?.Split[`${x}:${expense.PaidById}`]}</Text>)}
         </View>
         {comments && comments.length > 0 && <ScrollView className="w-full flex-col h-full pl-4 pr-4">
             <Text className="text-base font-semibold">Comments</Text>
-            {comments.map(cc => <CommentBox comment={cc} key={cc.SK} user={user} />)}
+            {comments.map(cc => <CommentBox comment={cc} key={cc?.SK} user={user} />)}
         </ScrollView>}
         <View className="w-full h-[7%] mt-auto bg-slate-200 flex-row justify-evenly">
             <TextInput className="w-[85%] h-[80%] mt-auto mb-auto bg-white rounded-full pl-4" placeholder="Add a comment" value={comment} onChangeText={(newval) => setComment(newval)} />

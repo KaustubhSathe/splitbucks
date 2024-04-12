@@ -387,6 +387,7 @@ func (db *Dynamo) CreateGroup(admin, adminName, groupName string) (*model.Group,
 		},
 		Admin:     db.UserPK(admin),
 		GroupName: groupName,
+		GroupType: "GROUP",
 		Members:   []string{db.UserPK(admin)},
 		Owes:      map[string]float32{},
 	})
@@ -403,6 +404,9 @@ func (db *Dynamo) CreateGroup(admin, adminName, groupName string) (*model.Group,
 		},
 		Admin:     db.UserPK(admin),
 		GroupName: groupName,
+		GroupType: "GROUP",
+		Owes:      map[string]float32{},
+		Members:   []string{db.UserPK(admin)},
 	})
 	if err != nil {
 		log.Fatalf("Got error marshalling Friend: %s", err.Error())
@@ -422,6 +426,7 @@ func (db *Dynamo) CreateGroup(admin, adminName, groupName string) (*model.Group,
 		GroupID:       db.GroupPK(groupID),
 		GroupName:     groupName,
 		ActivityType:  model.GROUP_CREATED,
+		GroupType:     "GROUP",
 	})
 	if err != nil {
 		log.Fatalf("Got error marshalling Friend: %s", err.Error())
@@ -455,6 +460,8 @@ func (db *Dynamo) CreateGroup(admin, adminName, groupName string) (*model.Group,
 		},
 		Admin:     db.UserPK(admin),
 		GroupName: groupName,
+		GroupType: "GROUP",
+		Owes:      map[string]float32{},
 		Members:   []string{db.UserPK(admin)},
 	}, nil
 }
@@ -507,6 +514,29 @@ func (db *Dynamo) AddMember(groupID, groupName, memberID, memberName, addedById,
 		&dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: groupMarshal}},
 	)
 
+	// Also add an entry for PK: USERID and SK: GROUPID
+	userGroupEntry, err := dynamodbattribute.MarshalMap(&model.Group{
+		Base: model.Base{
+			PK:        memberID,
+			SK:        groupID,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Admin:     group.Admin,
+		GroupName: group.GroupName,
+		Members:   group.Members,
+		Owes:      group.Owes,
+		GroupType: group.GroupType,
+	})
+	if err != nil {
+		log.Fatalf("Got error marshalling Group: %s", err.Error())
+		return nil, err
+	}
+	writeReqs = append(
+		writeReqs,
+		&dynamodb.WriteRequest{PutRequest: &dynamodb.PutRequest{Item: userGroupEntry}},
+	)
+
 	// Now also add an Activity entry of type MEMBER_ADDED
 	// this activity will be associated with GROUP
 	activityID := uuid.New().String()
@@ -523,6 +553,7 @@ func (db *Dynamo) AddMember(groupID, groupName, memberID, memberName, addedById,
 		AddedMemberName: memberName,
 		GroupName:       groupName,
 		GroupID:         groupID,
+		GroupType:       "GROUP",
 		ActivityType:    model.MEMBER_ADDED,
 	})
 	if err != nil {
@@ -616,6 +647,7 @@ func (db *Dynamo) RemoveMember(groupID, groupName, memberID, memberName, removed
 		RemovedMemberName: memberName,
 		GroupID:           groupID,
 		GroupName:         groupName,
+		GroupType:         "GROUP",
 		ActivityType:      model.MEMBER_REMOVED,
 	})
 	if err != nil {
@@ -659,6 +691,7 @@ func (db *Dynamo) CreateExpense(
 	expenseType string,
 	groupID string,
 	groupName string,
+	settlement bool,
 ) (*model.Expense, error) {
 	expenseID := uuid.New().String()
 	// two cases on basis of expense type either GROUP expense or NONGROUP expense
@@ -682,6 +715,7 @@ func (db *Dynamo) CreateExpense(
 			SplitType:    model.SplitTypesMap[splitType],
 			Split:        split,
 			ExpenseDate:  expenseDate,
+			Settlement:   settlement,
 			Note:         note,
 			SplitMembers: splitMembers,
 			ExpenseType:  model.ExpenseTypesMap[expenseType],
@@ -710,6 +744,7 @@ func (db *Dynamo) CreateExpense(
 			AddedByName:        addedByName,
 			GroupName:          groupName,
 			GroupID:            groupID,
+			GroupType:          "GROUP",
 			ExpenseID:          db.ExpensePK(expenseID),
 			ExpenseDescription: description,
 			ActivityType:       model.EXPENSE_ADDED,
@@ -808,6 +843,7 @@ func (db *Dynamo) CreateExpense(
 			SplitType:    model.SplitTypesMap[splitType],
 			Split:        split,
 			ExpenseDate:  expenseDate,
+			Settlement:   settlement,
 			Note:         note,
 			SplitMembers: splitMembers,
 			ExpenseType:  model.ExpenseTypesMap[expenseType],
@@ -869,6 +905,7 @@ func (db *Dynamo) CreateExpense(
 					GroupName: "NONGROUP",
 					Members:   []string{splitMember},
 					Owes:      map[string]float32{},
+					GroupType: "NONGROUP",
 				})
 				if err != nil {
 					log.Fatalf("Got error marshalling Group: %s", err.Error())
@@ -945,7 +982,8 @@ func (db *Dynamo) CreateExpense(
 			},
 			AddedByID:          addedById,
 			AddedByName:        addedByName,
-			GroupID:            groupID,
+			GroupID:            db.GroupSK("NONGROUP"),
+			GroupType:          "NONGROUP",
 			ExpenseDescription: description,
 			GroupName:          groupName,
 			ExpenseID:          db.ExpensePK(expenseID),
@@ -990,6 +1028,7 @@ func (db *Dynamo) CreateExpense(
 		SplitType:    model.SplitTypesMap[splitType],
 		Split:        split,
 		ExpenseDate:  expenseDate,
+		Settlement:   settlement,
 		Note:         note,
 		SplitMembers: splitMembers,
 		ExpenseType:  model.ExpenseTypesMap[expenseType],
