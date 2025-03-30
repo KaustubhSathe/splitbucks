@@ -34,8 +34,7 @@ export function App() {
           <image src={arrow} className='Arrow' />
           <text className='Description'>Tap the logo and have fun!</text>
           <text className='Hint'>
-            Edit<text style={{ fontStyle: 'italic' }}>{' src/App.tsx '}</text>
-            to see updates!
+            Hello world!vbdfdg
           </text>
         </view>
         <view style={{ flex: 1 }}></view>
